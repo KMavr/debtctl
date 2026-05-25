@@ -1,0 +1,63 @@
+import semver from 'semver';
+import { OverrideMeta, TriggerAnchor, TriggerDate } from '../types.js';
+
+export interface TriggerResult {
+  fired: boolean;
+  reason: string;
+}
+
+const isRangeEquivalent = (a: string, b: string): boolean => {
+  if (a === b) return true;
+  try {
+    return semver.subset(a, b) && semver.subset(b, a);
+  } catch {
+    return false;
+  }
+};
+
+const evaluateDate = (trigger: TriggerDate, now: Date): TriggerResult => {
+  const fired = now >= new Date(trigger.expires);
+  return {
+    fired,
+    reason: fired ? `Expired on ${trigger.expires}` : `Expires on ${trigger.expires}`,
+  };
+};
+
+const evaluateAnchor = (
+  trigger: TriggerAnchor,
+  packageJson: Record<string, unknown>,
+): TriggerResult => {
+  const { package: packageName, declaredRange } = trigger;
+
+  const allDeps: Record<string, string> = {
+    ...(packageJson.dependencies as Record<string, string> | undefined),
+    ...(packageJson.devDependencies as Record<string, string> | undefined),
+    ...(packageJson.peerDependencies as Record<string, string> | undefined),
+  };
+
+  const currentRange = allDeps[packageName];
+
+  if (currentRange === undefined) {
+    return { fired: true, reason: `${packageName} is no longer a dependency` };
+  }
+  if (!isRangeEquivalent(currentRange, declaredRange)) {
+    return {
+      fired: true,
+      reason: `${packageName} declared range changed: ${declaredRange} -> ${currentRange}`,
+    };
+  }
+  return { fired: false, reason: `${packageName} still pinned at ${declaredRange}` };
+};
+
+export const evaluateTrigger = (
+  meta: OverrideMeta,
+  packageJson: Record<string, unknown>,
+  now: Date = new Date(),
+): TriggerResult => {
+  switch (meta.revisitWhen.type) {
+    case 'date':
+      return evaluateDate(meta.revisitWhen, now);
+    case 'version-anchor':
+      return evaluateAnchor(meta.revisitWhen, packageJson);
+  }
+};
