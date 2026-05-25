@@ -2,7 +2,9 @@
   "name": "debtctl",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "bin": {
+    "debtctl": "dist/index.js"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
