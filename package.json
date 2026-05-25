@@ -15,6 +15,9 @@
   "author": "",
   "license": "ISC",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "lint-staged": {
     "*.{ts,js}": [
       "eslint --fix",
