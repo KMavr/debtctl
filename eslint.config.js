@@ -16,8 +16,7 @@ export default defineConfig([
                 'error',
                 {
                     selector: 'ExportDefaultDeclaration > FunctionDeclaration',
-                    message: 'Declare the function first, then export default as a separate line at the
-                    end.',
+                    message: 'Declare the function first, then export default as a separate line at the end.',
                 },
             ],
         },
@@ -25,7 +24,7 @@ export default defineConfig([
     {
         plugins: { import: importPlugin },
         rules: {
-            'import/extensions': ['error', 'never'],
+            'import/extensions': ['error', 'ignorePackages'],
             'import/order': [
                 'error',
                 {
