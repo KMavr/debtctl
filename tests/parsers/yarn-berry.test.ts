@@ -33,15 +33,15 @@ describe('Yarn Berry Parser', () => {
     expect(
       yarnBerryParse({
         resolutions: {
-          '**/lodash': '4.17.21',
-          'react@18/lodash': '4.17.21',
-          '@scope/pkg': '2.0.0',
+          '**/foo': '1.2.3',
+          'bar@1/foo': '1.2.3',
+          '@scope/baz': '2.0.0',
         },
       }),
     ).toStrictEqual([
-      { key: '**/lodash', value: '4.17.21' },
-      { key: 'react@18/lodash', value: '4.17.21' },
-      { key: '@scope/pkg', value: '2.0.0' },
+      { key: '**/foo', value: '1.2.3' },
+      { key: 'bar@1/foo', value: '1.2.3' },
+      { key: '@scope/baz', value: '2.0.0' },
     ]);
   });
 });
