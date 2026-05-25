@@ -17,7 +17,7 @@ program
     const result = await init(process.cwd());
     console.log(chalk.bold(`Detected: ${result.manager}`));
     console.log(
-      `Found ${result.total} override${result.total === 1 ? '' : 's'}. ${result.documented} documented, ${result.needsMetadata} need metadata.`,
+      `Found ${result.total} override${result.total === 1 ? '' : 's'}. ${result.documented} documented, ${result.needsMetadata} ${result.needsMetadata === 1 ? 'needs' : 'need'} metadata.`,
     );
     if (result.orphans > 0) {
       console.log(
