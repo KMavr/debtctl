@@ -12,7 +12,7 @@ export interface TriggerDate {
 export interface TriggerAnchor {
   type: 'version-anchor';
   package: string;
-  declaredVersion: string;
+  declaredRange: string;
 }
 export interface OverrideMeta {
   reason: string;

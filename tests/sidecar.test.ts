@@ -21,7 +21,7 @@ const fooMeta = {
 const barMeta = {
   reason: 'force peer compatibility',
   owner: 'alice',
-  revisitWhen: { type: 'version-anchor', package: 'bar', declaredVersion: '^4.0.0' },
+  revisitWhen: { type: 'version-anchor', package: 'bar', declaredRange: '^4.0.0' },
 } satisfies Sidecar['overrides'][string];
 
 describe('sidecar module', () => {
