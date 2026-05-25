@@ -12,6 +12,11 @@ const makeStubMeta = (): OverrideMeta => ({
   revisitWhen: { type: 'date', expires: 'TODO' },
 });
 
+export const isDocumented = (meta: OverrideMeta) =>
+  meta.reason !== 'TODO' &&
+  meta.owner !== 'TODO' &&
+  (meta.revisitWhen.type !== 'date' || meta.revisitWhen.expires !== 'TODO');
+
 export const readSidecar = async (cwd: string): Promise<Sidecar | null> => {
   const sidecarPath = path.join(cwd, SIDECAR_FILENAME);
 

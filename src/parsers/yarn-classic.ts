@@ -1,6 +1,6 @@
-import { Override } from '../types.js';
+import { Override, PackageJson } from '../types.js';
 
-export const yarnClassicParse = (packageJson: Record<string, unknown>): Override[] => {
+export const yarnClassicParse = (packageJson: PackageJson): Override[] => {
   const resolutions = packageJson.resolutions;
   if (!resolutions || typeof resolutions !== 'object') {
     return [];

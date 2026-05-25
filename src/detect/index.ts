@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ManagerConfig, MANAGERS } from '../config/managers.js';
+import { readPackageJson } from '../lib/readPackageJson.js';
 import { PackageManager } from '../types.js';
 
 export interface DetectResult {
@@ -20,9 +21,7 @@ export const fileExists = async (filePath: string): Promise<boolean> => {
 };
 
 export const checkPackageManagerField = async (cwd: string): Promise<DetectResult | null> => {
-  const packageJsonPath = path.join(cwd, 'package.json');
-  const rawPackageJson = await fs.readFile(packageJsonPath, 'utf8');
-  const packageJson = JSON.parse(rawPackageJson);
+  const packageJson = await readPackageJson(cwd);
 
   if (typeof packageJson.packageManager === 'string') {
     const [name, version] = packageJson.packageManager.split('@');

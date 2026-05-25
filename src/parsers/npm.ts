@@ -1,4 +1,4 @@
-import { Override } from '../types.js';
+import { Override, PackageJson } from '../types.js';
 
 const childParse = (node: Record<string, unknown>, pathToChild: string): Override[] => {
   return Object.entries(node).flatMap(([key, value]) => {
@@ -18,7 +18,7 @@ const childParse = (node: Record<string, unknown>, pathToChild: string): Overrid
   });
 };
 
-export const npmParse = (packageJson: Record<string, unknown>): Override[] => {
+export const npmParse = (packageJson: PackageJson): Override[] => {
   const overrides = packageJson.overrides;
   if (!overrides || typeof overrides !== 'object') {
     return [];

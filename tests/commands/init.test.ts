@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { init } from '../../src/commands/init.js';
-import { Sidecar } from '../../src/types.js';
+import { PackageJson, Sidecar } from '../../src/types.js';
 
 const SIDECAR_FILENAME = '.debtctl.json';
 
@@ -25,7 +25,7 @@ describe('init command', () => {
     await fs.rm(tempDir, { recursive: true, force: true });
   });
 
-  const writePackageJson = async (contents: Record<string, unknown>): Promise<void> => {
+  const writePackageJson = async (contents: PackageJson): Promise<void> => {
     await fs.writeFile(path.join(tempDir, 'package.json'), JSON.stringify(contents));
   };
 
