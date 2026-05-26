@@ -1,25 +1,50 @@
 {
   "name": "debtctl",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "Manage JavaScript dependency overrides as owned, documented technical debt with explicit review triggers.",
   "bin": {
     "debtctl": "dist/index.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/index.ts",
     "test": "vitest",
     "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
     "format": "prettier --write src",
-    "prepare": "husky"
+    "prepare": "node -e \"if (process.env.CI) process.exit(0)\" && husky",
+    "prepublishOnly": "npm run build && npm run lint && npm run typecheck && npm test -- --run"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "overrides",
+    "resolutions",
+    "dependencies",
+    "tech-debt",
+    "cli",
+    "npm",
+    "pnpm",
+    "yarn"
+  ],
+  "author": "Konstantinos Mavrikas <mavrikas.konstantinos@gmail.com>",
+  "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/KMavr/debtctl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/KMavr/debtctl/issues"
+  },
+  "homepage": "https://github.com/KMavr/debtctl#readme",
   "lint-staged": {
     "*.{ts,js}": [
       "eslint --fix",
