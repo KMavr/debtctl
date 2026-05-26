@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/KMavr/debtctl/actions/workflows/ci.yml/badge.svg)](https://github.com/KMavr/debtctl/actions/workflows/ci.yml)
 
-> Manage JavaScript dependency overrides as owned, documented technical debt.
+> Govern `npm` `overrides`, `pnpm.overrides`, and `yarn` `resolutions` as documented technical debt — with a `check` command that fails CI when overrides go stale.
 
 `debtctl` is a small CLI that treats your `npm` `overrides`, `pnpm.overrides`, and `yarn` `resolutions` as what they actually are: technical debt. It maintains a sidecar file (`.debtctl.json`) that records _why_ each override exists, _who_ owns it, and _when_ it should be revisited — then surfaces stale overrides in CI before they rot for another two years.
 

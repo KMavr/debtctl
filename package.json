@@ -1,7 +1,7 @@
 {
   "name": "debtctl",
   "version": "0.1.0",
-  "description": "Manage JavaScript dependency overrides as owned, documented technical debt with explicit review triggers.",
+  "description": "Govern npm overrides, pnpm.overrides, and yarn resolutions as documented technical debt. Fails CI when overrides go stale.",
   "bin": {
     "debtctl": "dist/index.js"
   },
@@ -22,14 +22,16 @@
     "prepublishOnly": "npm run build && npm run lint && npm run typecheck && npm test -- --run"
   },
   "keywords": [
+    "npm",
+    "pnpm",
+    "yarn",
     "overrides",
     "resolutions",
     "dependencies",
     "tech-debt",
     "cli",
-    "npm",
-    "pnpm",
-    "yarn"
+    "ci",
+    "typescript"
   ],
   "author": "Konstantinos Mavrikas <mavrikas.konstantinos@gmail.com>",
   "license": "MIT",
