@@ -1,6 +1,6 @@
 {
   "name": "debtctl",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Govern npm overrides, pnpm.overrides, and yarn resolutions as documented technical debt. Fails CI when overrides go stale.",
   "bin": {
     "debtctl": "dist/index.js"
