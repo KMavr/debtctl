@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- pnpm parser now reads overrides from `pnpm-workspace.yaml` in addition to `pnpm.overrides` in `package.json`. When the same key appears in both, the workspace YAML value wins (matches pnpm's own precedence).
+- `yaml` runtime dependency for parsing `pnpm-workspace.yaml`.
+
+### Changed
+
+- Parser dispatcher (`parseOverrides`) is now async and accepts `cwd` as a third argument. The pnpm parser signature is `(packageJson, cwd) => Promise<Override[]>`; other parsers retain their synchronous in-memory signatures.
+
 ## [0.1.0] — 2026-05-26
 
 Initial release.
