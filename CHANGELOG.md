@@ -4,14 +4,18 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-05-26
+
 ### Added
 
 - pnpm parser now reads overrides from `pnpm-workspace.yaml` in addition to `pnpm.overrides` in `package.json`. When the same key appears in both, the workspace YAML value wins (matches pnpm's own precedence).
 - `yaml` runtime dependency for parsing `pnpm-workspace.yaml`.
+- Dependabot configuration for automated `npm` and GitHub Actions dependency updates.
 
 ### Changed
 
 - Parser dispatcher (`parseOverrides`) is now async and accepts `cwd` as a third argument. The pnpm parser signature is `(packageJson, cwd) => Promise<Override[]>`; other parsers retain their synchronous in-memory signatures.
+- README install instructions now recommend the per-project (dev dependency) flow, with global install documented as an alternative for ad-hoc use.
 
 ## [0.1.0] — 2026-05-26
 
@@ -29,5 +33,6 @@ Initial release.
 - Range comparison is semver-aware via `semver.subset`, with string-equality fallback for non-semver ranges like `latest` and `workspace:*`.
 - Warning when multiple lockfiles are present, with the matched set surfaced in JSON output.
 
-[Unreleased]: https://github.com/KMavr/debtctl/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/KMavr/debtctl/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/KMavr/debtctl/releases/tag/v0.2.0
 [0.1.0]: https://github.com/KMavr/debtctl/releases/tag/v0.1.0
