@@ -16,9 +16,42 @@ The tool has four runtime dependencies (`commander`, `chalk`, `semver`, `yaml`) 
 
 ## Install
 
+Install as a dev dependency so the version is pinned in your project and CI runs match local:
+
 ```bash
-npm install -g debtctl
+npm install --save-dev debtctl
+# or
+pnpm add -D debtctl
+# or
+yarn add --dev debtctl
 ```
+
+Then invoke via your package manager's runner:
+
+```bash
+npx debtctl init           # npm
+pnpm debtctl init          # pnpm (shortcut for `pnpm exec debtctl`)
+yarn debtctl init          # yarn
+```
+
+Or add a `package.json` script and call it via the manager:
+
+```json
+{
+  "scripts": {
+    "debt:check": "debtctl check --strict"
+  }
+}
+```
+
+```bash
+npm run debt:check
+```
+
+### Alternatives
+
+- **Global install** — `npm install -g debtctl`. Convenient for ad-hoc use across many projects; not recommended for CI, since the version drifts independently from your repo.
+- **No install** — `npx debtctl@0.1.0 check`. Pinned to a version, fetched on demand. Fine for one-off exploration; slower on every CI run than installing.
 
 Requires Node.js ≥ 20.
 
@@ -26,12 +59,15 @@ Requires Node.js ≥ 20.
 
 ```bash
 cd your-project
-debtctl init        # scaffolds .debtctl.json with TODO stubs for current overrides
+npm install --save-dev debtctl
+npx debtctl init        # scaffolds .debtctl.json with TODO stubs for current overrides
 $EDITOR .debtctl.json
-debtctl check       # fails if anything is undocumented or due for review
+npx debtctl check       # fails if anything is undocumented or due for review
 ```
 
-Commit `.debtctl.json` to your repo. Run `debtctl check --strict` in CI.
+Commit `.debtctl.json` to your repo. Run `npx debtctl check --strict` in CI.
+
+> The command examples below show the bare `debtctl` invocation. Prefix with `npx`, `pnpm`, or `yarn` per your package manager.
 
 ## Commands
 
@@ -79,12 +115,14 @@ Due for review (1):
 2. The lockfile present in the working directory.
 3. If multiple lockfiles are present, `debtctl` reports the ambiguity and falls back to a fixed priority order: `npm` → `pnpm` → `yarn-classic` → `yarn-berry`.
 
-| Manager        | Lockfile            | Override location |
-| -------------- | ------------------- | ----------------- |
-| `npm`          | `package-lock.json` | `overrides`       |
-| `pnpm`         | `pnpm-lock.yaml`    | `pnpm.overrides`  |
-| `yarn-classic` | `yarn.lock` (v1)    | `resolutions`     |
-| `yarn-berry`   | `yarn.lock` (v6+)   | `resolutions`     |
+| Manager        | Lockfile            | Override location                             |
+| -------------- | ------------------- | --------------------------------------------- |
+| `npm`          | `package-lock.json` | `overrides` (in `package.json`)               |
+| `pnpm`         | `pnpm-lock.yaml`    | `pnpm.overrides` and/or `pnpm-workspace.yaml` |
+| `yarn-classic` | `yarn.lock` (v1)    | `resolutions` (in `package.json`)             |
+| `yarn-berry`   | `yarn.lock` (v6+)   | `resolutions` (in `package.json`)             |
+
+For pnpm projects, `debtctl` reads overrides from both `pnpm.overrides` in `package.json` and the `overrides:` block of `pnpm-workspace.yaml` (the recommended location since pnpm 9). When the same key appears in both, the workspace YAML value wins — matching pnpm's own precedence.
 
 ### Ambiguous lockfiles
 
@@ -148,12 +186,19 @@ Fires when today is on or after `expires`. Use this only when there's no natural
 
 ## CI usage
 
-Add a step to your workflow that runs `check --strict`. Example for GitHub Actions:
+With `debtctl` installed as a dev dependency, run `check --strict` after `npm ci` (or the equivalent for your manager). Example for GitHub Actions:
 
 ```yaml
+- uses: actions/checkout@v4
+- uses: actions/setup-node@v4
+  with:
+    node-version: 20
+- run: npm ci
 - name: Verify dependency overrides
   run: npx debtctl check --strict
 ```
+
+Pinning `debtctl` in `devDependencies` keeps the version stable across CI runs and matches whatever you use locally.
 
 Exit codes are designed for CI:
 
