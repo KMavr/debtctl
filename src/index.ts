@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { runCheck } from './commands/check.js';
+import { runCheck } from './cli/check.js';
 import { init } from './commands/init.js';
 
 const program = new Command();
