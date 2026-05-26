@@ -1,15 +1,19 @@
 #!/usr/bin/env node
+import { createRequire } from 'node:module';
 import chalk from 'chalk';
 import { Command } from 'commander';
 import { runCheck } from './cli/check.js';
 import { init } from './commands/init.js';
+
+const require = createRequire(import.meta.url);
+const pkg = require('../package.json') as { version: string };
 
 const program = new Command();
 
 program
   .name('debtctl')
   .description('Manage JS dependency overrides as owned, documented technical debt')
-  .version('0.1.0');
+  .version(pkg.version);
 
 program
   .command('init')
