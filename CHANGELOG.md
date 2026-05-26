@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [0.2.1] — 2026-05-26
+
 ### Changed
 
 - `npm run build` now cleans `dist/` before compiling, and the publish pipeline runs as `prepack` instead of `prepublishOnly` so `npm pack` also produces a fresh build. Prevents stale or removed source files from leaking into published tarballs.
@@ -42,6 +44,7 @@ Initial release.
 - Range comparison is semver-aware via `semver.subset`, with string-equality fallback for non-semver ranges like `latest` and `workspace:*`.
 - Warning when multiple lockfiles are present, with the matched set surfaced in JSON output.
 
-[Unreleased]: https://github.com/KMavr/debtctl/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/KMavr/debtctl/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/KMavr/debtctl/releases/tag/v0.2.1
 [0.2.0]: https://github.com/KMavr/debtctl/releases/tag/v0.2.0
 [0.1.0]: https://github.com/KMavr/debtctl/releases/tag/v0.1.0
