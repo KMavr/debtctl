@@ -12,7 +12,7 @@ Overrides are routinely added to patch a CVE, force peer compatibility, or pin a
 
 `debtctl` does one job: it enforces three pieces of metadata next to every override, and fails CI when an override has drifted past its expected lifetime. No metadata, no merge. No revisit trigger, no merge. Reviewer changed the override's range and forgot to update the rationale? CI catches it.
 
-The tool has three runtime dependencies (`commander`, `chalk`, `semver`) and is deliberately small. It does not patch your `package.json`, run installs, or talk to a registry — it only reads, classifies, and reports.
+The tool has four runtime dependencies (`commander`, `chalk`, `semver`, `yaml`) and is deliberately small. It does not patch your `package.json`, run installs, or talk to a registry — it only reads, classifies, and reports.
 
 ## Install
 
