@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import chalk from 'chalk';
 import { Command } from 'commander';
+import { runCheck } from './commands/check.js';
 import { init } from './commands/init.js';
 
 const program = new Command();
@@ -27,5 +28,13 @@ program
       );
     }
   });
+
+program
+  .command('check')
+  .description('Report overrides that are missing metadata, incomplete, or due for review')
+  .option('--strict', 'Exit non-zero on dueForReview as well as missing/incomplete')
+  .option('--json', 'Emit machine-readable JSON; suppress human output')
+  .option('--only <bucket>', 'Filter to one of: missing|incomplete|dueForReview|orphans')
+  .action(async (options) => await runCheck(options));
 
 program.parse(process.argv);
