@@ -16,6 +16,13 @@ program
   .description('Scaffold .debtctl.json with metadata stubs for current overrides')
   .action(async () => {
     const result = await init(process.cwd());
+    if (result.ambiguous) {
+      console.error(
+        chalk.yellow(
+          `Warning: multiple lockfiles found (${result.ambiguous.join(', ')}). Using ${result.manager}. Consider removing the unused lockfile.`,
+        ),
+      );
+    }
     console.log(chalk.bold(`Detected: ${result.manager}`));
     console.log(
       `Found ${result.total} override${result.total === 1 ? '' : 's'}. ${result.documented} documented, ${result.needsMetadata} ${result.needsMetadata === 1 ? 'needs' : 'need'} metadata.`,
