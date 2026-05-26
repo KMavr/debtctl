@@ -1,6 +1,7 @@
 # debtctl
 
 [![CI](https://github.com/KMavr/debtctl/actions/workflows/ci.yml/badge.svg)](https://github.com/KMavr/debtctl/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/debtctl.svg)](https://www.npmjs.com/package/debtctl)
 
 > Govern `npm` `overrides`, `pnpm.overrides`, and `yarn` `resolutions` as documented technical debt — with a `check` command that fails CI when overrides go stale.
 
@@ -13,6 +14,17 @@ Overrides are routinely added to patch a CVE, force peer compatibility, or pin a
 `debtctl` does one job: it enforces three pieces of metadata next to every override, and fails CI when an override has drifted past its expected lifetime. No metadata, no merge. No revisit trigger, no merge. Reviewer changed the override's range and forgot to update the rationale? CI catches it.
 
 The tool has four runtime dependencies (`commander`, `chalk`, `semver`, `yaml`) and is deliberately small. It does not patch your `package.json`, run installs, or talk to a registry — it only reads, classifies, and reports.
+
+## How this compares to Renovate / Dependabot
+
+Renovate and Dependabot **bump** dependencies. They open PRs when a new version is available, including for overridden packages. They don't enforce _why_ an override exists, _who_ owns it, or _when_ it should be revisited.
+
+`debtctl` is the layer next to them, not a replacement:
+
+- **Renovate / Dependabot** open the PR that bumps the underlying package.
+- **`debtctl`** fails CI when the override pinning it has no rationale, no owner, or has drifted past its revisit trigger.
+
+It does not call a registry, run installs, or open PRs — it reads `package.json`, reads `.debtctl.json`, and reports. Best suited for teams with a backlog of undocumented overrides who want a CI gate to stop the bleeding.
 
 ## Install
 
