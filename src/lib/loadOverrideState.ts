@@ -15,7 +15,7 @@ export interface OverrideState {
 export const loadOverrideState = async (cwd: string): Promise<OverrideState> => {
   const { manager, ambiguous } = await detect(cwd);
   const packageJson = await readPackageJson(cwd);
-  const overrides = parseOverrides(manager, packageJson);
+  const overrides = await parseOverrides(manager, packageJson, cwd);
   const sidecar = await readSidecar(cwd);
   return { manager, packageJson, overrides, sidecar, ambiguous };
 };
