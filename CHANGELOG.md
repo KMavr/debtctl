@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Changed
+
+- `npm run build` now cleans `dist/` before compiling, and the publish pipeline runs as `prepack` instead of `prepublishOnly` so `npm pack` also produces a fresh build. Prevents stale or removed source files from leaking into published tarballs.
+
 ### Fixed
 
 - `debtctl --version` now reports the version declared in `package.json`. Previously the CLI hardcoded `0.1.0` and continued to report it after the 0.2.0 release.
