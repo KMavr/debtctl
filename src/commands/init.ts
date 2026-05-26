@@ -8,10 +8,11 @@ interface InitResult {
   documented: number;
   needsMetadata: number;
   orphans: number;
+  ambiguous?: string[];
 }
 
 export const init = async (cwd: string): Promise<InitResult> => {
-  const { manager, overrides, sidecar } = await loadOverrideState(cwd);
+  const { manager, overrides, sidecar, ambiguous } = await loadOverrideState(cwd);
 
   const overrideKeys = overrides.map((override) => override.key);
   const mergedSidecar = mergeSidecar(sidecar, overrideKeys);
@@ -31,5 +32,6 @@ export const init = async (cwd: string): Promise<InitResult> => {
     documented,
     needsMetadata: overrideKeys.length - documented,
     orphans,
+    ...(ambiguous ? { ambiguous } : {}),
   };
 };

@@ -16,6 +16,7 @@ export interface CheckResult {
   sidecarPresent: boolean;
   entries: CheckEntry[];
   orphans: { key: string }[];
+  ambiguous?: string[];
 }
 
 const classifyEntry = (
@@ -57,7 +58,7 @@ const classifyEntry = (
 };
 
 export const check = async (cwd: string, now: Date = new Date()): Promise<CheckResult> => {
-  const { manager, overrides, packageJson, sidecar } = await loadOverrideState(cwd);
+  const { manager, overrides, packageJson, sidecar, ambiguous } = await loadOverrideState(cwd);
 
   const sidecarOverrides = sidecar?.overrides ?? {};
   const entries = overrides.map((override) =>
@@ -74,5 +75,6 @@ export const check = async (cwd: string, now: Date = new Date()): Promise<CheckR
     sidecarPresent: sidecar !== null,
     entries,
     orphans,
+    ...(ambiguous ? { ambiguous } : {}),
   };
 };
