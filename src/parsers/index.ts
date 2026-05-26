@@ -4,12 +4,16 @@ import { pnpmParse } from './pnpm.js';
 import { yarnBerryParse } from './yarn-berry.js';
 import { yarnClassicParse } from './yarn-classic.js';
 
-export const parseOverrides = (manager: PackageManager, packageJson: PackageJson): Override[] => {
+export const parseOverrides = async (
+  manager: PackageManager,
+  packageJson: PackageJson,
+  cwd: string,
+): Promise<Override[]> => {
   switch (manager) {
     case 'npm':
       return npmParse(packageJson);
     case 'pnpm':
-      return pnpmParse(packageJson);
+      return await pnpmParse(packageJson, cwd);
     case 'yarn-classic':
       return yarnClassicParse(packageJson);
     case 'yarn-berry':
