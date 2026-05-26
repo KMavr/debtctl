@@ -26,7 +26,11 @@ export const readSidecar = async (cwd: string): Promise<Sidecar | null> => {
   }
 
   const sidecarRaw = await fs.readFile(sidecarPath, 'utf8');
-  return JSON.parse(sidecarRaw);
+  try {
+    return JSON.parse(sidecarRaw);
+  } catch (parseError) {
+    throw new Error(`Failed to parse ${sidecarPath}: ${(parseError as Error).message}`);
+  }
 };
 
 export const writeSidecar = async (cwd: string, sidecar: Sidecar): Promise<void> => {

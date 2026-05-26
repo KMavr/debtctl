@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format is based on 
 ### Fixed
 
 - `debtctl --version` now reports the version declared in `package.json`. Previously the CLI hardcoded `0.1.0` and continued to report it after the 0.2.0 release.
+- Malformed `package.json` or `.debtctl.json` now fails with a descriptive `Failed to parse <path>: <reason>` error instead of a raw `SyntaxError` stack trace.
 
 ## [0.2.0] — 2026-05-26
 

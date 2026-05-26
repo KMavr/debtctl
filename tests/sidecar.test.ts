@@ -46,9 +46,12 @@ describe('sidecar module', () => {
       expect(await readSidecar(tempDir)).toStrictEqual(sidecar);
     });
 
-    it('should throw when the file is malformed JSON', async () => {
-      await fs.writeFile(path.join(tempDir, SIDECAR_FILENAME), '{ not valid json');
-      await expect(readSidecar(tempDir)).rejects.toThrow();
+    it('should throw a descriptive error when the file is malformed JSON', async () => {
+      const sidecarPath = path.join(tempDir, SIDECAR_FILENAME);
+      await fs.writeFile(sidecarPath, '{ not valid json');
+      await expect(readSidecar(tempDir)).rejects.toThrow(
+        new RegExp(`^Failed to parse ${sidecarPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:`),
+      );
     });
   });
 
