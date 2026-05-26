@@ -1,6 +1,6 @@
-import { Override } from '../types.js';
+import { Override, PackageJson } from '../types.js';
 
-export const pnpmParse = (packageJson: Record<string, unknown>): Override[] => {
+export const pnpmParse = (packageJson: PackageJson): Override[] => {
   const pnpm = packageJson.pnpm;
   if (!pnpm || typeof pnpm !== 'object') {
     return [];

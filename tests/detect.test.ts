@@ -8,6 +8,7 @@ import {
   fileExists,
   getLockfileMatches,
 } from '../src/detect/index.js';
+import { PackageJson } from '../src/types.js';
 
 const YARN_CLASSIC_LOCK = '# yarn lockfile v1\n\n\nsome-package@^1.0.0:\n  version "1.0.0"\n';
 const YARN_BERRY_LOCK =
@@ -24,7 +25,7 @@ describe('detect module', () => {
     await fs.rm(tempDir, { recursive: true, force: true });
   });
 
-  const writePackageJson = async (contents: Record<string, unknown>): Promise<void> => {
+  const writePackageJson = async (contents: PackageJson): Promise<void> => {
     await fs.writeFile(path.join(tempDir, 'package.json'), JSON.stringify(contents));
   };
 

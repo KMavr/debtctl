@@ -1,5 +1,5 @@
 import semver from 'semver';
-import { OverrideMeta, TriggerAnchor, TriggerDate } from '../types.js';
+import { OverrideMeta, PackageJson, TriggerAnchor, TriggerDate } from '../types.js';
 
 export interface TriggerResult {
   fired: boolean;
@@ -23,10 +23,7 @@ const evaluateDate = (trigger: TriggerDate, now: Date): TriggerResult => {
   };
 };
 
-const evaluateAnchor = (
-  trigger: TriggerAnchor,
-  packageJson: Record<string, unknown>,
-): TriggerResult => {
+const evaluateAnchor = (trigger: TriggerAnchor, packageJson: PackageJson): TriggerResult => {
   const { package: packageName, declaredRange } = trigger;
 
   const allDeps: Record<string, string> = {
@@ -51,7 +48,7 @@ const evaluateAnchor = (
 
 export const evaluateTrigger = (
   meta: OverrideMeta,
-  packageJson: Record<string, unknown>,
+  packageJson: PackageJson,
   now: Date = new Date(),
 ): TriggerResult => {
   switch (meta.revisitWhen.type) {
