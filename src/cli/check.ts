@@ -58,10 +58,12 @@ export const renderJson = (input: {
   manager: PackageManager;
   filteredEntries: CheckEntry[];
   filteredOrphans: { key: string }[];
+  ambiguous?: string[];
 }): string =>
   JSON.stringify(
     {
       manager: input.manager,
+      ...(input.ambiguous ? { ambiguous: input.ambiguous } : {}),
       entries: input.filteredEntries,
       orphans: input.filteredOrphans,
     },
@@ -140,6 +142,14 @@ export const runCheck = async (options: CheckOptions): Promise<void> => {
   const onlyFilter = validateOnly(options.only);
   const checkResult = await check(process.cwd());
 
+  if (checkResult.ambiguous && !options.json) {
+    console.error(
+      chalk.yellow(
+        `Warning: multiple lockfiles found (${checkResult.ambiguous.join(', ')}). Using ${checkResult.manager}. Consider removing the unused lockfile.`,
+      ),
+    );
+  }
+
   if (!checkResult.sidecarPresent && checkResult.entries.length > 0 && !options.json) {
     console.error(chalk.red('No .debtctl.json found. Run `debtctl init` to scaffold it.'));
     process.exit(2);
@@ -155,6 +165,7 @@ export const runCheck = async (options: CheckOptions): Promise<void> => {
         manager: checkResult.manager,
         filteredEntries: prepared.filteredEntries,
         filteredOrphans: prepared.filteredOrphans,
+        ambiguous: checkResult.ambiguous,
       })
     : renderHuman({ ...prepared, shouldFail });
 

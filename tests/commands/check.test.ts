@@ -210,4 +210,25 @@ describe('check command', () => {
     });
     expect(result.orphans).toEqual([{ key: 'orphaned' }]);
   });
+
+  it('should populate ambiguous when multiple lockfiles are present', async () => {
+    await fs.writeFile(
+      path.join(tempDir, 'yarn.lock'),
+      '# yarn lockfile v1\n\n\nsome-package@^1.0.0:\n  version "1.0.0"\n',
+    );
+    await writePackageJson({ overrides: { foo: '1.2.3' } });
+
+    const result = await check(tempDir);
+
+    expect(result.ambiguous).toEqual(['package-lock.json', 'yarn.lock']);
+    expect(result.manager).toBe('npm');
+  });
+
+  it('should omit ambiguous when only one lockfile is present', async () => {
+    await writePackageJson({ overrides: { foo: '1.2.3' } });
+
+    const result = await check(tempDir);
+
+    expect(result.ambiguous).toBeUndefined();
+  });
 });
