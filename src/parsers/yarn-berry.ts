@@ -7,6 +7,6 @@ export const yarnBerryParse = (packageJson: PackageJson): Override[] => {
   }
 
   return Object.entries(resolutions)
-    .filter(([, value]) => typeof value === 'string')
+    .filter(([, value]) => typeof value === 'string' && !value.startsWith('patch:'))
     .map(([key, value]) => ({ key, value: value as string }));
 };

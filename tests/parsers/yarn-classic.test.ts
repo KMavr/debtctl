@@ -28,4 +28,15 @@ describe('Yarn Classic Parser', () => {
       { key: 'foo', value: '1.2.3' },
     ]);
   });
+
+  it('should exclude patch protocol values from overrides', () => {
+    const overrides = yarnClassicParse({
+      resolutions: {
+        foo: '^1.0.0',
+        bar: 'patch:bar@npm%3A2.0.0#./.yarn/patches/bar.patch',
+      },
+    });
+
+    expect(overrides).toStrictEqual([{ key: 'foo', value: '^1.0.0' }]);
+  });
 });

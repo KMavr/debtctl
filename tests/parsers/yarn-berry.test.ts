@@ -44,4 +44,15 @@ describe('Yarn Berry Parser', () => {
       { key: '@scope/baz', value: '2.0.0' },
     ]);
   });
+
+  it('should exclude patch protocol values from overrides', () => {
+    const overrides = yarnBerryParse({
+      resolutions: {
+        foo: '^1.0.0',
+        bar: 'patch:bar@npm%3A2.0.0#./.yarn/patches/bar.patch',
+      },
+    });
+
+    expect(overrides).toStrictEqual([{ key: 'foo', value: '^1.0.0' }]);
+  });
 });
