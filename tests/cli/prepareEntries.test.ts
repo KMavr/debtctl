@@ -41,7 +41,7 @@ describe('prepareEntries', () => {
       ],
     });
 
-    const prepared = prepareEntries(result, 'incomplete');
+    const prepared = prepareEntries(result, { bucket: 'incomplete', domain: 'all' });
 
     expect(prepared.filteredEntries).toEqual([
       { key: 'baz', status: 'incomplete', reason: 'TODO fields present' },
@@ -54,7 +54,7 @@ describe('prepareEntries', () => {
       orphans: [{ key: 'orphaned' }],
     });
 
-    const prepared = prepareEntries(result, 'missing');
+    const prepared = prepareEntries(result, { bucket: 'missing', domain: 'all' });
 
     expect(prepared.filteredOrphans).toEqual([]);
   });
@@ -68,7 +68,7 @@ describe('prepareEntries', () => {
       orphans: [{ key: 'orphaned' }],
     });
 
-    const prepared = prepareEntries(result, 'orphans');
+    const prepared = prepareEntries(result, { bucket: 'orphans', domain: 'all' });
 
     expect(prepared.filteredEntries).toEqual([]);
     expect(prepared.filteredOrphans).toEqual([{ key: 'orphaned' }]);
@@ -157,7 +157,7 @@ describe('prepareEntries', () => {
       ],
     });
 
-    const prepared = prepareEntries(result, 'missing');
+    const prepared = prepareEntries(result, { bucket: 'missing', domain: 'all' });
 
     expect(prepared.filteredEntries.map((entry) => entry.key)).toEqual(['foo']);
     expect(prepared.filteredPatchEntries.map((entry) => entry.key)).toEqual(['bar']);
@@ -169,7 +169,7 @@ describe('prepareEntries', () => {
       patchOrphans: [{ key: 'orphaned-patch' }],
     });
 
-    const prepared = prepareEntries(result, 'missing');
+    const prepared = prepareEntries(result, { bucket: 'missing', domain: 'all' });
 
     expect(prepared.filteredPatchOrphans).toEqual([]);
   });
@@ -179,8 +179,72 @@ describe('prepareEntries', () => {
       patchOrphans: [{ key: 'orphaned-patch' }],
     });
 
-    const prepared = prepareEntries(result, 'orphans');
+    const prepared = prepareEntries(result, { bucket: 'orphans', domain: 'all' });
 
     expect(prepared.filteredPatchOrphans).toEqual([{ key: 'orphaned-patch' }]);
+  });
+
+  describe('domain scoping', () => {
+    it('should include only override entries when domain is overrides', () => {
+      const result = buildResult({
+        entries: [{ key: 'foo', status: 'missing' }],
+        patchEntries: [{ key: 'bar', status: 'missing' }],
+      });
+
+      const prepared = prepareEntries(result, { bucket: 'missing', domain: 'overrides' });
+
+      expect(prepared.filteredEntries.map((entry) => entry.key)).toEqual(['foo']);
+      expect(prepared.filteredPatchEntries).toEqual([]);
+      expect(prepared.patchMissing).toEqual([]);
+    });
+
+    it('should include only patch entries when domain is patches', () => {
+      const result = buildResult({
+        entries: [{ key: 'foo', status: 'missing' }],
+        patchEntries: [{ key: 'bar', status: 'missing' }],
+      });
+
+      const prepared = prepareEntries(result, { bucket: 'missing', domain: 'patches' });
+
+      expect(prepared.filteredEntries).toEqual([]);
+      expect(prepared.missing).toEqual([]);
+      expect(prepared.filteredPatchEntries.map((entry) => entry.key)).toEqual(['bar']);
+    });
+
+    it('should empty override orphans when domain is patches', () => {
+      const result = buildResult({
+        orphans: [{ key: 'override-orphan' }],
+        patchOrphans: [{ key: 'patch-orphan' }],
+      });
+
+      const prepared = prepareEntries(result, { bucket: 'orphans', domain: 'patches' });
+
+      expect(prepared.filteredOrphans).toEqual([]);
+      expect(prepared.filteredPatchOrphans).toEqual([{ key: 'patch-orphan' }]);
+    });
+
+    it('should empty patch orphans when domain is overrides', () => {
+      const result = buildResult({
+        orphans: [{ key: 'override-orphan' }],
+        patchOrphans: [{ key: 'patch-orphan' }],
+      });
+
+      const prepared = prepareEntries(result, { bucket: 'orphans', domain: 'overrides' });
+
+      expect(prepared.filteredOrphans).toEqual([{ key: 'override-orphan' }]);
+      expect(prepared.filteredPatchOrphans).toEqual([]);
+    });
+
+    it('should keep both domains when domain is all (regression check for bare bucket filter)', () => {
+      const result = buildResult({
+        entries: [{ key: 'foo', status: 'missing' }],
+        patchEntries: [{ key: 'bar', status: 'missing' }],
+      });
+
+      const prepared = prepareEntries(result, { bucket: 'missing', domain: 'all' });
+
+      expect(prepared.filteredEntries.map((entry) => entry.key)).toEqual(['foo']);
+      expect(prepared.filteredPatchEntries.map((entry) => entry.key)).toEqual(['bar']);
+    });
   });
 });
