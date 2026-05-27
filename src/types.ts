@@ -22,6 +22,7 @@ export interface OverrideMeta {
   revisitWhen: TriggerDate | TriggerAnchor;
 }
 export interface Sidecar {
-  version: 1;
+  version: 2;
   overrides: Record<string, OverrideMeta>;
+  patches: Record<string, OverrideMeta>;
 }

@@ -27,7 +27,11 @@ export const readSidecar = async (cwd: string): Promise<Sidecar | null> => {
 
   const sidecarRaw = await fs.readFile(sidecarPath, 'utf8');
   try {
-    return JSON.parse(sidecarRaw);
+    const parsed = JSON.parse(sidecarRaw);
+    if (parsed.version === 1) {
+      return { version: 2, overrides: parsed.overrides ?? {}, patches: {} };
+    }
+    return parsed;
   } catch (parseError) {
     throw new Error(`Failed to parse ${sidecarPath}: ${(parseError as Error).message}`);
   }
@@ -53,5 +57,9 @@ export const mergeSidecar = (existing: Sidecar | null, currentOverrideKeys: stri
     ]),
   );
 
-  return { version: 1, overrides: { ...existingOverrides, ...updated } };
+  return {
+    version: 2,
+    overrides: { ...existingOverrides, ...updated },
+    patches: existing?.patches ?? {},
+  };
 };
