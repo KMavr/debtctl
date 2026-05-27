@@ -2,20 +2,29 @@ import { describe, expect, it } from 'vitest';
 import { prepareEntries } from '../../src/cli/check.js';
 import { CheckEntry, CheckResult } from '../../src/commands/check.js';
 
-const buildResult = (entries: CheckEntry[], orphans: { key: string }[] = []): CheckResult => ({
+const buildResult = (input: {
+  entries?: CheckEntry[];
+  orphans?: { key: string }[];
+  patchEntries?: CheckEntry[];
+  patchOrphans?: { key: string }[];
+}): CheckResult => ({
   manager: 'npm',
   sidecarPresent: true,
-  entries,
-  orphans,
+  entries: input.entries ?? [],
+  orphans: input.orphans ?? [],
+  patchEntries: input.patchEntries ?? [],
+  patchOrphans: input.patchOrphans ?? [],
 });
 
 describe('prepareEntries', () => {
   it('should exclude ok entries when onlyFilter is undefined', () => {
-    const result = buildResult([
-      { key: 'foo', status: 'ok' },
-      { key: 'bar', status: 'missing' },
-      { key: 'baz', status: 'incomplete', reason: 'TODO fields present' },
-    ]);
+    const result = buildResult({
+      entries: [
+        { key: 'foo', status: 'ok' },
+        { key: 'bar', status: 'missing' },
+        { key: 'baz', status: 'incomplete', reason: 'TODO fields present' },
+      ],
+    });
 
     const prepared = prepareEntries(result, undefined);
 
@@ -23,12 +32,14 @@ describe('prepareEntries', () => {
   });
 
   it('should keep only the requested status when onlyFilter is set', () => {
-    const result = buildResult([
-      { key: 'foo', status: 'ok' },
-      { key: 'bar', status: 'missing' },
-      { key: 'baz', status: 'incomplete', reason: 'TODO fields present' },
-      { key: 'qux', status: 'dueForReview', reason: 'Expired on 2020-01-01' },
-    ]);
+    const result = buildResult({
+      entries: [
+        { key: 'foo', status: 'ok' },
+        { key: 'bar', status: 'missing' },
+        { key: 'baz', status: 'incomplete', reason: 'TODO fields present' },
+        { key: 'qux', status: 'dueForReview', reason: 'Expired on 2020-01-01' },
+      ],
+    });
 
     const prepared = prepareEntries(result, 'incomplete');
 
@@ -38,7 +49,10 @@ describe('prepareEntries', () => {
   });
 
   it('should empty orphans when onlyFilter is a non-orphans bucket', () => {
-    const result = buildResult([{ key: 'foo', status: 'missing' }], [{ key: 'orphaned' }]);
+    const result = buildResult({
+      entries: [{ key: 'foo', status: 'missing' }],
+      orphans: [{ key: 'orphaned' }],
+    });
 
     const prepared = prepareEntries(result, 'missing');
 
@@ -46,13 +60,13 @@ describe('prepareEntries', () => {
   });
 
   it('should keep orphans and empty entries when onlyFilter is orphans', () => {
-    const result = buildResult(
-      [
+    const result = buildResult({
+      entries: [
         { key: 'foo', status: 'missing' },
         { key: 'bar', status: 'incomplete', reason: 'TODO fields present' },
       ],
-      [{ key: 'orphaned' }],
-    );
+      orphans: [{ key: 'orphaned' }],
+    });
 
     const prepared = prepareEntries(result, 'orphans');
 
@@ -61,12 +75,14 @@ describe('prepareEntries', () => {
   });
 
   it('should group missing, incomplete, and dueForReview into separate buckets', () => {
-    const result = buildResult([
-      { key: 'foo', status: 'missing' },
-      { key: 'bar', status: 'incomplete', reason: 'TODO fields present' },
-      { key: 'baz', status: 'dueForReview', reason: 'Expired on 2020-01-01' },
-      { key: 'qux', status: 'ok' },
-    ]);
+    const result = buildResult({
+      entries: [
+        { key: 'foo', status: 'missing' },
+        { key: 'bar', status: 'incomplete', reason: 'TODO fields present' },
+        { key: 'baz', status: 'dueForReview', reason: 'Expired on 2020-01-01' },
+        { key: 'qux', status: 'ok' },
+      ],
+    });
 
     const prepared = prepareEntries(result, undefined);
 
@@ -76,10 +92,10 @@ describe('prepareEntries', () => {
   });
 
   it('should keep orphans untouched when onlyFilter is undefined', () => {
-    const result = buildResult(
-      [{ key: 'foo', status: 'missing' }],
-      [{ key: 'orphan-one' }, { key: 'orphan-two' }],
-    );
+    const result = buildResult({
+      entries: [{ key: 'foo', status: 'missing' }],
+      orphans: [{ key: 'orphan-one' }, { key: 'orphan-two' }],
+    });
 
     const prepared = prepareEntries(result, undefined);
 
@@ -87,7 +103,7 @@ describe('prepareEntries', () => {
   });
 
   it('should return empty arrays when the check result has no entries or orphans', () => {
-    const result = buildResult([], []);
+    const result = buildResult({});
 
     const prepared = prepareEntries(result, undefined);
 
@@ -96,5 +112,75 @@ describe('prepareEntries', () => {
     expect(prepared.missing).toEqual([]);
     expect(prepared.incomplete).toEqual([]);
     expect(prepared.dueForReview).toEqual([]);
+    expect(prepared.filteredPatchEntries).toEqual([]);
+    expect(prepared.filteredPatchOrphans).toEqual([]);
+    expect(prepared.patchMissing).toEqual([]);
+    expect(prepared.patchIncomplete).toEqual([]);
+    expect(prepared.patchDueForReview).toEqual([]);
+  });
+
+  it('should exclude ok patch entries when onlyFilter is undefined', () => {
+    const result = buildResult({
+      patchEntries: [
+        { key: 'foo', status: 'ok' },
+        { key: 'bar', status: 'missing' },
+      ],
+    });
+
+    const prepared = prepareEntries(result, undefined);
+
+    expect(prepared.filteredPatchEntries.map((entry) => entry.key)).toEqual(['bar']);
+  });
+
+  it('should group patch entries into separate buckets', () => {
+    const result = buildResult({
+      patchEntries: [
+        { key: 'foo', status: 'missing' },
+        { key: 'bar', status: 'incomplete', reason: 'TODO fields present' },
+        { key: 'baz', status: 'dueForReview', reason: 'Patch content changed' },
+      ],
+    });
+
+    const prepared = prepareEntries(result, undefined);
+
+    expect(prepared.patchMissing.map((entry) => entry.key)).toEqual(['foo']);
+    expect(prepared.patchIncomplete.map((entry) => entry.key)).toEqual(['bar']);
+    expect(prepared.patchDueForReview.map((entry) => entry.key)).toEqual(['baz']);
+  });
+
+  it('should apply onlyFilter to patches across both domains', () => {
+    const result = buildResult({
+      entries: [{ key: 'foo', status: 'missing' }],
+      patchEntries: [
+        { key: 'bar', status: 'missing' },
+        { key: 'baz', status: 'incomplete', reason: 'TODO fields present' },
+      ],
+    });
+
+    const prepared = prepareEntries(result, 'missing');
+
+    expect(prepared.filteredEntries.map((entry) => entry.key)).toEqual(['foo']);
+    expect(prepared.filteredPatchEntries.map((entry) => entry.key)).toEqual(['bar']);
+  });
+
+  it('should empty patch orphans when onlyFilter is a non-orphans bucket', () => {
+    const result = buildResult({
+      patchEntries: [{ key: 'foo', status: 'missing' }],
+      patchOrphans: [{ key: 'orphaned-patch' }],
+    });
+
+    const prepared = prepareEntries(result, 'missing');
+
+    expect(prepared.filteredPatchOrphans).toEqual([]);
+  });
+
+  it('should keep patch orphans when onlyFilter is orphans', () => {
+    const result = buildResult({
+      patchOrphans: [{ key: 'orphaned-patch' }],
+    });
+
+    const prepared = prepareEntries(result, 'orphans');
+
+    expect(prepared.filteredPatchOrphans).toEqual([{ key: 'orphaned-patch' }]);
   });
 });

@@ -152,6 +152,47 @@ describe('sidecar module', () => {
       const merged = mergeSidecar(existing, ['foo']);
       expect(merged.patches).toStrictEqual({ bar: barMeta });
     });
+
+    it('should scaffold new patches with patch-hash stubs', () => {
+      const merged = mergeSidecar(null, [], [{ key: 'foo', hash: 'sha256:abc123' }]);
+      expect(merged.patches.foo).toStrictEqual({
+        reason: 'TODO',
+        owner: 'TODO',
+        revisitWhen: { type: 'patch-hash', hash: 'sha256:abc123' },
+      });
+    });
+
+    it('should preserve existing documented patch metadata when the key still exists', () => {
+      const documentedPatchMeta = {
+        reason: 'backport upstream fix',
+        owner: 'team-foo',
+        revisitWhen: { type: 'patch-hash' as const, hash: 'sha256:olderhash' },
+      };
+      const existing = makeSidecar({}, { foo: documentedPatchMeta });
+      const merged = mergeSidecar(existing, [], [{ key: 'foo', hash: 'sha256:newerhash' }]);
+
+      expect(merged.patches.foo).toStrictEqual(documentedPatchMeta);
+    });
+
+    it('should keep orphaned patch entries when their key is not in the current patches list', () => {
+      const existing = makeSidecar({}, { foo: barMeta });
+      const merged = mergeSidecar(existing, [], []);
+      expect(merged.patches.foo).toStrictEqual(barMeta);
+    });
+
+    it('should mix overrides and patches in a single merge', () => {
+      const merged = mergeSidecar(null, ['foo'], [{ key: 'bar', hash: 'sha256:def456' }]);
+      expect(merged.overrides.foo).toStrictEqual({
+        reason: 'TODO',
+        owner: 'TODO',
+        revisitWhen: { type: 'date', expires: 'TODO' },
+      });
+      expect(merged.patches.bar).toStrictEqual({
+        reason: 'TODO',
+        owner: 'TODO',
+        revisitWhen: { type: 'patch-hash', hash: 'sha256:def456' },
+      });
+    });
   });
 
   describe('round-trip', () => {
