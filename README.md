@@ -159,11 +159,11 @@ Ambiguity never affects the exit code — it's repo hygiene, not override debt.
 
 ## Metadata model
 
-`.debtctl.json` is a versioned JSON file with one entry per override. Two trigger types are supported:
+`.debtctl.json` is a versioned JSON file with one entry per override. Three trigger types are supported (`version-anchor`, `date`, `patch-hash`):
 
 ```json
 {
-  "version": 1,
+  "version": 2,
   "overrides": {
     "some-package": {
       "reason": "Patches CVE-2024-XXXX until upstream v3 ships",
@@ -182,19 +182,90 @@ Ambiguity never affects the exit code — it's repo hygiene, not override debt.
         "expires": "2026-09-01"
       }
     }
-  }
+  },
+  "patches": {}
 }
 ```
 
-### `version-anchor` (recommended)
+Sidecar files written by older versions of `debtctl` (`"version": 1`) are auto-migrated to v2 on first read. Your existing file on disk is left untouched until you re-run `debtctl init`.
 
-Fires when the declared range for the named package in `package.json` no longer matches `declaredRange`. This is usually what you want: if upstream releases a fix and someone bumps the dependency, you'll be prompted to revisit the override automatically — no human-set deadline required.
+### `version-anchor` (recommended for overrides)
+
+Fires when the declared range for the named package in `package.json` no longer matches `declaredRange`. This is usually what you want for overrides: if upstream releases a fix and someone bumps the dependency, you'll be prompted to revisit the override automatically — no human-set deadline required.
 
 Ranges are compared semantically via `semver.subset`, so `^1.0.0` and `^1.0.0` match, but `^1.0.0` and `^2.0.0` don't. Non-semver ranges like `latest` or `workspace:*` fall back to string equality.
 
 ### `date`
 
-Fires when today is on or after `expires`. Use this only when there's no natural dependency to anchor against (e.g., you're waiting on an external schedule).
+Fires when today is on or after `expires`. Use this only when there's no natural dependency or patch file to anchor against (e.g., you're waiting on an external schedule).
+
+### `patch-hash` (recommended for patches)
+
+Fires when the patch file's content hash differs from the recorded hash. See [Patches](#patches) for the full story.
+
+## Patches
+
+`debtctl` also governs code patches managed by `patch-package`, pnpm's `patchedDependencies`, and yarn berry's `patch:` protocol. Patches are arguably worse than overrides for rot: they include explicit code diffs that can fail to apply silently when upstream shifts, or apply _wrongly_ and quietly diverge from the patch's original intent.
+
+Patches share the same metadata shape as overrides (`reason`, `owner`, `revisitWhen`) and live under the `patches` key of `.debtctl.json`. `debtctl init` detects patches in your project, computes a SHA-256 hash of each patch file, and scaffolds an entry with a `patch-hash` trigger pre-armed at the current content.
+
+| Manager        | Where patches are declared                   | Where patch files live                         |
+| -------------- | -------------------------------------------- | ---------------------------------------------- |
+| `npm`          | `package.json` `scripts.postinstall`         | `patches/*.patch`                              |
+| `yarn-classic` | `package.json` `scripts.postinstall`         | `patches/*.patch`                              |
+| `pnpm`         | `pnpm.patchedDependencies` in `package.json` | path declared per entry (typically `patches/`) |
+| `yarn-berry`   | `resolutions` field with `patch:` protocol   | `.yarn/patches/*.patch`                        |
+
+Example sidecar with both an override and two patches:
+
+```json
+{
+  "version": 2,
+  "overrides": {
+    "some-package": {
+      "reason": "Patches CVE-2024-XXXX until upstream v3 ships",
+      "owner": "team-security",
+      "revisitWhen": {
+        "type": "version-anchor",
+        "package": "some-package",
+        "declaredRange": "^2.4.0"
+      }
+    }
+  },
+  "patches": {
+    "react-router": {
+      "reason": "Backport upstream PR #1234 until v6.20 ships",
+      "owner": "team-frontend",
+      "revisitWhen": {
+        "type": "patch-hash",
+        "hash": "sha256:abc123def456..."
+      }
+    },
+    "legacy-thing": {
+      "reason": "Block calls to deprecated endpoint until migration completes",
+      "owner": "alice",
+      "revisitWhen": {
+        "type": "date",
+        "expires": "2026-12-01"
+      }
+    }
+  }
+}
+```
+
+### The `patch-hash` trigger
+
+`debtctl init` records the SHA-256 hash of each patch file at the moment it's detected. `debtctl check` recomputes the hash on every run and fires the trigger if it has drifted. This is the killer feature: if a developer edits a patch file without also updating the metadata, CI catches it.
+
+`debtctl` does **not** automatically update the stored hash on subsequent `init` runs. The hash is your snapshot — when the trigger fires, you should review what changed in the patch, update the `reason` if needed, and then update the `hash` to the new value to "acknowledge" the change.
+
+**Line endings:** patch contents are normalized to LF (`\n`) before hashing. This means a patch file checked out on Windows (CRLF) and macOS/Linux (LF) produces the same hash. Without this, every Windows contributor would see all patch triggers fire on every install.
+
+### Out of scope (for now)
+
+- Workspace-sourced yarn berry patches (`patch:.../workspace#...`) — only npm-sourced patches stored in `.yarn/patches/` are detected.
+- Inline `.pnp.cjs` diffs.
+- Auto-applying or auto-fixing patches — `debtctl` is strictly read-only.
 
 ## CI usage
 
@@ -224,7 +295,7 @@ Orphans never cause a non-zero exit; they're informational.
 
 ## Status
 
-`debtctl` is at `0.2.1`. The metadata schema is versioned (`"version": 1`); future schema changes will bump it explicitly. Bug reports and PRs welcome.
+`debtctl` is at `0.2.1`. The metadata schema is at version 2; v1 sidecars are auto-migrated on read. Future schema changes will bump it explicitly. Bug reports and PRs welcome.
 
 ## License
 
