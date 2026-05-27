@@ -7,7 +7,16 @@ import { Sidecar } from '../src/types.js';
 
 const SIDECAR_FILENAME = '.debtctl.json';
 
-const makeSidecar = (overrides: Record<string, Sidecar['overrides'][string]>): Sidecar => ({
+const makeSidecar = (
+  overrides: Record<string, Sidecar['overrides'][string]>,
+  patches: Record<string, Sidecar['patches'][string]> = {},
+): Sidecar => ({
+  version: 2,
+  overrides,
+  patches,
+});
+
+const makeV1Sidecar = (overrides: Record<string, Sidecar['overrides'][string]>) => ({
   version: 1,
   overrides,
 });
@@ -53,6 +62,28 @@ describe('sidecar module', () => {
         new RegExp(`^Failed to parse ${sidecarPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}:`),
       );
     });
+
+    it('should migrate a v1 sidecar to v2 shape when read', async () => {
+      const v1Sidecar = makeV1Sidecar({ foo: fooMeta });
+      await fs.writeFile(path.join(tempDir, SIDECAR_FILENAME), JSON.stringify(v1Sidecar));
+
+      expect(await readSidecar(tempDir)).toStrictEqual({
+        version: 2,
+        overrides: { foo: fooMeta },
+        patches: {},
+      });
+    });
+
+    it('should leave a v1 sidecar file on disk untouched after reading', async () => {
+      const v1Sidecar = makeV1Sidecar({ foo: fooMeta });
+      const sidecarPath = path.join(tempDir, SIDECAR_FILENAME);
+      await fs.writeFile(sidecarPath, JSON.stringify(v1Sidecar));
+
+      await readSidecar(tempDir);
+
+      const rawAfterRead = await fs.readFile(sidecarPath, 'utf8');
+      expect(JSON.parse(rawAfterRead)).toStrictEqual(v1Sidecar);
+    });
   });
 
   describe('writeSidecar', () => {
@@ -77,11 +108,12 @@ describe('sidecar module', () => {
     it('should create a fresh sidecar with stubs when existing is null', () => {
       const merged = mergeSidecar(null, ['foo', 'bar']);
       expect(merged).toStrictEqual({
-        version: 1,
+        version: 2,
         overrides: {
           foo: { reason: 'TODO', owner: 'TODO', revisitWhen: { type: 'date', expires: 'TODO' } },
           bar: { reason: 'TODO', owner: 'TODO', revisitWhen: { type: 'date', expires: 'TODO' } },
         },
+        patches: {},
       });
     });
 
@@ -113,6 +145,12 @@ describe('sidecar module', () => {
       const merged = mergeSidecar(null, ['foo', 'bar']);
       expect(merged.overrides.foo).not.toBe(merged.overrides.bar);
       expect(merged.overrides.foo.revisitWhen).not.toBe(merged.overrides.bar.revisitWhen);
+    });
+
+    it('should preserve existing patches during merge', () => {
+      const existing = makeSidecar({ foo: fooMeta }, { bar: barMeta });
+      const merged = mergeSidecar(existing, ['foo']);
+      expect(merged.patches).toStrictEqual({ bar: barMeta });
     });
   });
 
