@@ -50,6 +50,10 @@ describe('init command', () => {
       documented: 0,
       needsMetadata: 2,
       orphans: 0,
+      patchTotal: 0,
+      patchDocumented: 0,
+      patchNeedsMetadata: 0,
+      patchOrphans: 0,
     });
     expect(Object.keys(sidecar.overrides).sort()).toStrictEqual(['bar', 'foo']);
     expect(sidecar.overrides.foo.reason).toBe('TODO');
@@ -68,6 +72,10 @@ describe('init command', () => {
       documented: 1,
       needsMetadata: 0,
       orphans: 0,
+      patchTotal: 0,
+      patchDocumented: 0,
+      patchNeedsMetadata: 0,
+      patchOrphans: 0,
     });
     expect(sidecar.overrides.foo).toStrictEqual(documentedMeta);
   });
@@ -85,6 +93,10 @@ describe('init command', () => {
       documented: 1,
       needsMetadata: 1,
       orphans: 0,
+      patchTotal: 0,
+      patchDocumented: 0,
+      patchNeedsMetadata: 0,
+      patchOrphans: 0,
     });
     expect(sidecar.overrides.foo).toStrictEqual(documentedMeta);
     expect(sidecar.overrides.bar.reason).toBe('TODO');
@@ -106,6 +118,10 @@ describe('init command', () => {
       documented: 1,
       needsMetadata: 0,
       orphans: 1,
+      patchTotal: 0,
+      patchDocumented: 0,
+      patchNeedsMetadata: 0,
+      patchOrphans: 0,
     });
     expect(sidecar.overrides.bar).toStrictEqual(documentedMeta);
   });
@@ -130,7 +146,78 @@ describe('init command', () => {
       documented: 0,
       needsMetadata: 0,
       orphans: 0,
+      patchTotal: 0,
+      patchDocumented: 0,
+      patchNeedsMetadata: 0,
+      patchOrphans: 0,
     });
+  });
+
+  it('should scaffold patch metadata stubs with a patch-hash trigger', async () => {
+    await writePackageJson({ name: 'with-patches' });
+    await fs.mkdir(path.join(tempDir, 'patches'));
+    await fs.writeFile(
+      path.join(tempDir, 'patches', 'foo+1.0.0.patch'),
+      '--- a/index.js\n+++ b/index.js\n@@ -1 +1 @@\n-old\n+new\n',
+    );
+
+    const result = await init(tempDir);
+    const sidecar = await readSidecarFromDisk();
+
+    expect(result.patchTotal).toBe(1);
+    expect(result.patchDocumented).toBe(0);
+    expect(result.patchNeedsMetadata).toBe(1);
+    expect(sidecar.patches.foo.reason).toBe('TODO');
+    expect(sidecar.patches.foo.owner).toBe('TODO');
+    expect(sidecar.patches.foo.revisitWhen.type).toBe('patch-hash');
+    expect(sidecar.patches.foo.revisitWhen).toMatchObject({
+      type: 'patch-hash',
+      hash: expect.stringMatching(/^sha256:[0-9a-f]{64}$/),
+    });
+  });
+
+  it('should preserve existing patch metadata without updating its stored hash', async () => {
+    await writePackageJson({ name: 'with-patches' });
+    await fs.mkdir(path.join(tempDir, 'patches'));
+    await fs.writeFile(path.join(tempDir, 'patches', 'foo+1.0.0.patch'), 'new content\n');
+
+    const documentedPatchMeta = {
+      reason: 'backport upstream fix',
+      owner: 'team-foo',
+      revisitWhen: { type: 'patch-hash' as const, hash: 'sha256:olderhash' },
+    };
+    await writeSidecarFixture({
+      version: 2,
+      overrides: {},
+      patches: { foo: documentedPatchMeta },
+    });
+
+    const result = await init(tempDir);
+    const sidecar = await readSidecarFromDisk();
+
+    expect(result.patchDocumented).toBe(1);
+    expect(result.patchNeedsMetadata).toBe(0);
+    expect(sidecar.patches.foo).toStrictEqual(documentedPatchMeta);
+  });
+
+  it('should report patch orphans (sidecar patches no longer detected)', async () => {
+    await writePackageJson({ name: 'no-patches' });
+    await writeSidecarFixture({
+      version: 2,
+      overrides: {},
+      patches: {
+        gone: {
+          reason: 'TODO',
+          owner: 'TODO',
+          revisitWhen: { type: 'patch-hash', hash: 'sha256:abc' },
+        },
+      },
+    });
+
+    const result = await init(tempDir);
+
+    expect(result.patchTotal).toBe(0);
+    expect(result.patchOrphans).toBe(1);
   });
 
   it('should populate ambiguous when multiple lockfiles are present', async () => {

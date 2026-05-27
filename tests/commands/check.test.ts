@@ -231,4 +231,118 @@ describe('check command', () => {
 
     expect(result.ambiguous).toBeUndefined();
   });
+
+  const writePatchFile = async (filename: string, body: string): Promise<void> => {
+    const patchesDir = path.join(tempDir, 'patches');
+    await fs.mkdir(patchesDir, { recursive: true });
+    await fs.writeFile(path.join(patchesDir, filename), body);
+  };
+
+  it('should classify a patch with no sidecar entry as missing', async () => {
+    await writePackageJson({ name: 'with-patches' });
+    await writePatchFile('foo+1.0.0.patch', 'old patch body\n');
+    await writeSidecarFixture({ version: 2, overrides: {}, patches: {} });
+
+    const result = await check(tempDir);
+
+    expect(result.patchEntries).toContainEqual({ key: 'foo', status: 'missing' });
+  });
+
+  it('should classify a stubbed patch entry as incomplete', async () => {
+    await writePackageJson({ name: 'with-patches' });
+    await writePatchFile('foo+1.0.0.patch', 'patch body\n');
+    await writeSidecarFixture({
+      version: 2,
+      overrides: {},
+      patches: {
+        foo: {
+          reason: 'TODO',
+          owner: 'TODO',
+          revisitWhen: { type: 'patch-hash', hash: 'sha256:irrelevant' },
+        },
+      },
+    });
+
+    const result = await check(tempDir);
+
+    expect(result.patchEntries).toEqual([
+      { key: 'foo', status: 'incomplete', reason: 'TODO fields present' },
+    ]);
+  });
+
+  it('should classify a documented patch as ok when the stored hash matches the file', async () => {
+    const patchBody = 'patch body\n';
+    await writePackageJson({ name: 'with-patches' });
+    await writePatchFile('foo+1.0.0.patch', patchBody);
+
+    const { createHash } = await import('node:crypto');
+    const expectedHash = `sha256:${createHash('sha256').update(patchBody).digest('hex')}`;
+
+    await writeSidecarFixture({
+      version: 2,
+      overrides: {},
+      patches: {
+        foo: {
+          reason: 'backport upstream fix',
+          owner: 'team-foo',
+          revisitWhen: { type: 'patch-hash', hash: expectedHash },
+        },
+      },
+    });
+
+    const result = await check(tempDir);
+
+    expect(result.patchEntries[0].status).toBe('ok');
+    expect(result.patchEntries[0].key).toBe('foo');
+  });
+
+  it('should classify a documented patch as dueForReview when the file content has changed', async () => {
+    await writePackageJson({ name: 'with-patches' });
+    await writePatchFile('foo+1.0.0.patch', 'edited body\n');
+    await writeSidecarFixture({
+      version: 2,
+      overrides: {},
+      patches: {
+        foo: {
+          reason: 'backport upstream fix',
+          owner: 'team-foo',
+          revisitWhen: { type: 'patch-hash', hash: 'sha256:staleoldhash' },
+        },
+      },
+    });
+
+    const result = await check(tempDir);
+
+    expect(result.patchEntries[0].status).toBe('dueForReview');
+    expect(result.patchEntries[0].reason).toMatch(/Patch content changed/);
+  });
+
+  it('should report patch orphans for sidecar patch keys not in detected patches', async () => {
+    await writePackageJson({ name: 'no-patches' });
+    await writeSidecarFixture({
+      version: 2,
+      overrides: {},
+      patches: {
+        gone: {
+          reason: 'TODO',
+          owner: 'TODO',
+          revisitWhen: { type: 'patch-hash', hash: 'sha256:abc' },
+        },
+      },
+    });
+
+    const result = await check(tempDir);
+
+    expect(result.patchOrphans).toEqual([{ key: 'gone' }]);
+    expect(result.patchEntries).toEqual([]);
+  });
+
+  it('should return empty patch arrays when no patches are present anywhere', async () => {
+    await writePackageJson({ overrides: { foo: '1.2.3' } });
+
+    const result = await check(tempDir);
+
+    expect(result.patchEntries).toEqual([]);
+    expect(result.patchOrphans).toEqual([]);
+  });
 });

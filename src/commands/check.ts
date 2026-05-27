@@ -1,7 +1,7 @@
-import { loadOverrideState } from '../lib/loadOverrideState.js';
+import { loadDebtState } from '../lib/loadDebtState.js';
 import { isDocumented } from '../sidecar/index.js';
 import { evaluateTrigger } from '../triggers/index.js';
-import { OverrideMeta, PackageJson, PackageManager } from '../types.js';
+import { OverrideMeta, PackageJson, PackageManager, Patch } from '../types.js';
 
 export type CheckStatus = 'ok' | 'missing' | 'incomplete' | 'dueForReview';
 
@@ -15,7 +15,9 @@ export interface CheckResult {
   manager: PackageManager;
   sidecarPresent: boolean;
   entries: CheckEntry[];
+  patchEntries: CheckEntry[];
   orphans: { key: string }[];
+  patchOrphans: { key: string }[];
   ambiguous?: string[];
 }
 
@@ -57,12 +59,61 @@ const classifyEntry = (
   return { key, status: 'ok' as const, reason };
 };
 
+const classifyPatchEntry = (
+  patch: Patch,
+  meta: OverrideMeta | undefined,
+  packageJson: PackageJson,
+  now: Date,
+): CheckEntry => {
+  if (meta === undefined) {
+    return {
+      key: patch.key,
+      status: 'missing' as const,
+    };
+  }
+
+  if (!isDocumented(meta)) {
+    return {
+      key: patch.key,
+      status: 'incomplete' as const,
+      reason: 'TODO fields present',
+    };
+  }
+
+  if (meta.revisitWhen.type === 'date') {
+    const parsed = new Date(meta.revisitWhen.expires);
+    if (Number.isNaN(parsed.getTime())) {
+      return {
+        key: patch.key,
+        status: 'incomplete' as const,
+        reason: `Invalid expires date: ${meta.revisitWhen.expires}`,
+      };
+    }
+  }
+
+  const { fired, reason } = evaluateTrigger(
+    meta,
+    { packageJson, patchContentHash: patch.contentHash },
+    now,
+  );
+
+  if (fired) {
+    return { key: patch.key, status: 'dueForReview' as const, reason };
+  }
+  return { key: patch.key, status: 'ok' as const, reason };
+};
+
 export const check = async (cwd: string, now: Date = new Date()): Promise<CheckResult> => {
-  const { manager, overrides, packageJson, sidecar, ambiguous } = await loadOverrideState(cwd);
+  const { manager, overrides, patches, packageJson, sidecar, ambiguous } = await loadDebtState(cwd);
 
   const sidecarOverrides = sidecar?.overrides ?? {};
+  const sidecarPatches = sidecar?.patches ?? {};
+
   const entries = overrides.map((override) =>
     classifyEntry(override.key, sidecarOverrides[override.key], packageJson, now),
+  );
+  const patchEntries = patches.map((patch) =>
+    classifyPatchEntry(patch, sidecarPatches[patch.key], packageJson, now),
   );
 
   const overrideKeySet = new Set(overrides.map((override) => override.key));
@@ -70,11 +121,18 @@ export const check = async (cwd: string, now: Date = new Date()): Promise<CheckR
     .filter((key) => !overrideKeySet.has(key))
     .map((key) => ({ key }));
 
+  const patchKeySet = new Set(patches.map((patch) => patch.key));
+  const patchOrphans = Object.keys(sidecarPatches)
+    .filter((key) => !patchKeySet.has(key))
+    .map((key) => ({ key }));
+
   return {
     manager,
     sidecarPresent: sidecar !== null,
     entries,
+    patchEntries,
     orphans,
+    patchOrphans,
     ...(ambiguous ? { ambiguous } : {}),
   };
 };

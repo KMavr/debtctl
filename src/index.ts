@@ -29,12 +29,19 @@ program
     }
     console.log(chalk.bold(`Detected: ${result.manager}`));
     console.log(
-      `Found ${result.total} override${result.total === 1 ? '' : 's'}. ${result.documented} documented, ${result.needsMetadata} ${result.needsMetadata === 1 ? 'needs' : 'need'} metadata.`,
+      `Found ${result.total} override${result.total === 1 ? '' : 's'} (${result.documented} documented, ${result.needsMetadata} ${result.needsMetadata === 1 ? 'needs' : 'need'} metadata) and ${result.patchTotal} patch${result.patchTotal === 1 ? '' : 'es'} (${result.patchDocumented} documented, ${result.patchNeedsMetadata} ${result.patchNeedsMetadata === 1 ? 'needs' : 'need'} metadata).`,
     );
     if (result.orphans > 0) {
       console.log(
         chalk.yellow(
-          `${result.orphans} orphaned sidecar ${result.orphans === 1 ? 'entry' : 'entries'}.`,
+          `${result.orphans} orphaned override sidecar ${result.orphans === 1 ? 'entry' : 'entries'}.`,
+        ),
+      );
+    }
+    if (result.patchOrphans > 0) {
+      console.log(
+        chalk.yellow(
+          `${result.patchOrphans} orphaned patch sidecar ${result.patchOrphans === 1 ? 'entry' : 'entries'}.`,
         ),
       );
     }

@@ -12,6 +12,12 @@ const makeStubMeta = (): OverrideMeta => ({
   revisitWhen: { type: 'date', expires: 'TODO' },
 });
 
+const makePatchStubMeta = (hash: string): OverrideMeta => ({
+  reason: 'TODO',
+  owner: 'TODO',
+  revisitWhen: { type: 'patch-hash', hash },
+});
+
 export const isDocumented = (meta: OverrideMeta) =>
   meta.reason !== 'TODO' &&
   meta.owner !== 'TODO' &&
@@ -47,19 +53,31 @@ export const writeSidecar = async (cwd: string, sidecar: Sidecar): Promise<void>
   await fs.rename(tmpPath, sidecarPath);
 };
 
-export const mergeSidecar = (existing: Sidecar | null, currentOverrideKeys: string[]): Sidecar => {
+export const mergeSidecar = (
+  existing: Sidecar | null,
+  currentOverrideKeys: string[],
+  currentPatches: { key: string; hash: string }[] = [],
+): Sidecar => {
   const existingOverrides = existing?.overrides ?? {};
+  const existingPatches = existing?.patches ?? {};
 
-  const updated = Object.fromEntries(
+  const updatedOverrides = Object.fromEntries(
     currentOverrideKeys.map((overrideKey) => [
       overrideKey,
       existingOverrides[overrideKey] ?? makeStubMeta(),
     ]),
   );
 
+  const updatedPatches = Object.fromEntries(
+    currentPatches.map((patch) => [
+      patch.key,
+      existingPatches[patch.key] ?? makePatchStubMeta(patch.hash),
+    ]),
+  );
+
   return {
     version: 2,
-    overrides: { ...existingOverrides, ...updated },
-    patches: existing?.patches ?? {},
+    overrides: { ...existingOverrides, ...updatedOverrides },
+    patches: { ...existingPatches, ...updatedPatches },
   };
 };
