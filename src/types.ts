@@ -7,6 +7,13 @@ export interface Override {
   value: string;
 }
 
+export interface Patch {
+  key: string;
+  source: 'patch-package' | 'pnpm' | 'yarn-berry';
+  patchFilePath: string;
+  contentHash: string;
+}
+
 export interface TriggerDate {
   type: 'date';
   expires: string;
