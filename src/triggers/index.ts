@@ -1,9 +1,20 @@
 import semver from 'semver';
-import { OverrideMeta, PackageJson, TriggerAnchor, TriggerDate } from '../types.js';
+import {
+  OverrideMeta,
+  PackageJson,
+  TriggerAnchor,
+  TriggerDate,
+  TriggerPatchHash,
+} from '../types.js';
 
 export interface TriggerResult {
   fired: boolean;
   reason: string;
+}
+
+export interface TriggerContext {
+  packageJson: PackageJson;
+  patchContentHash?: string;
 }
 
 const isRangeEquivalent = (a: string, b: string): boolean => {
@@ -46,15 +57,30 @@ const evaluateAnchor = (trigger: TriggerAnchor, packageJson: PackageJson): Trigg
   return { fired: false, reason: `${packageName} still pinned at ${declaredRange}` };
 };
 
+const evaluatePatchHash = (
+  trigger: TriggerPatchHash,
+  patchContentHash: string | undefined,
+): TriggerResult => {
+  if (patchContentHash === undefined) {
+    return { fired: true, reason: 'Patch file no longer present' };
+  }
+  if (patchContentHash !== trigger.hash) {
+    return { fired: true, reason: 'Patch content changed since metadata was recorded' };
+  }
+  return { fired: false, reason: 'Patch content matches recorded hash' };
+};
+
 export const evaluateTrigger = (
   meta: OverrideMeta,
-  packageJson: PackageJson,
+  context: TriggerContext,
   now: Date = new Date(),
 ): TriggerResult => {
   switch (meta.revisitWhen.type) {
     case 'date':
       return evaluateDate(meta.revisitWhen, now);
     case 'version-anchor':
-      return evaluateAnchor(meta.revisitWhen, packageJson);
+      return evaluateAnchor(meta.revisitWhen, context.packageJson);
+    case 'patch-hash':
+      return evaluatePatchHash(meta.revisitWhen, context.patchContentHash);
   }
 };
