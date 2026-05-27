@@ -52,7 +52,10 @@ program
   .description('Report overrides that are missing metadata, incomplete, or due for review')
   .option('--strict', 'Exit non-zero on dueForReview as well as missing/incomplete')
   .option('--json', 'Emit machine-readable JSON; suppress human output')
-  .option('--only <bucket>', 'Filter to one of: missing|incomplete|dueForReview|orphans')
+  .option(
+    '--only <bucket>',
+    'Filter to one bucket. Bare: missing|incomplete|dueForReview|orphans (both domains). Prefixed: overrides:<bucket> or patches:<bucket>',
+  )
   .action(async (options) => await runCheck(options));
 
 program.parse(process.argv);

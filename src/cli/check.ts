@@ -3,12 +3,20 @@ import { check, CheckEntry, CheckResult } from '../commands/check.js';
 import { PackageManager } from '../types.js';
 
 export type OnlyBucket = 'missing' | 'incomplete' | 'dueForReview' | 'orphans';
+export type OnlyDomain = 'overrides' | 'patches';
+
 const ONLY_BUCKETS: OnlyBucket[] = ['missing', 'incomplete', 'dueForReview', 'orphans'];
+const ONLY_DOMAINS: OnlyDomain[] = ['overrides', 'patches'];
 
 export interface CheckOptions {
   strict?: boolean;
   json?: boolean;
   only?: string;
+}
+
+export interface OnlyFilter {
+  bucket: OnlyBucket;
+  domain: OnlyDomain | 'all';
 }
 
 export interface PreparedEntries {
@@ -24,16 +32,42 @@ export interface PreparedEntries {
   patchDueForReview: CheckEntry[];
 }
 
-const validateOnly = (value: string | undefined): OnlyBucket | undefined => {
+const validateOnly = (value: string | undefined): OnlyFilter | undefined => {
   if (value === undefined) return undefined;
 
-  if ((ONLY_BUCKETS as string[]).includes(value)) {
-    return value as OnlyBucket;
+  const [domainOrBucket, bucketAfterColon] = value.split(':');
+  const hasDomainPrefix = bucketAfterColon !== undefined;
+
+  if (hasDomainPrefix) {
+    if (!(ONLY_DOMAINS as string[]).includes(domainOrBucket)) {
+      console.error(
+        chalk.red(
+          `Invalid --only domain: ${domainOrBucket}. Expected one of: ${ONLY_DOMAINS.join(', ')}.`,
+        ),
+      );
+      process.exit(2);
+    }
+    if (!(ONLY_BUCKETS as string[]).includes(bucketAfterColon)) {
+      console.error(
+        chalk.red(
+          `Invalid --only bucket: ${bucketAfterColon}. Expected one of: ${ONLY_BUCKETS.join(', ')}.`,
+        ),
+      );
+      process.exit(2);
+    }
+    return {
+      bucket: bucketAfterColon as OnlyBucket,
+      domain: domainOrBucket as OnlyDomain,
+    };
   }
-  console.error(
-    chalk.red(`Invalid --only value: ${value}. Expected one of: ${ONLY_BUCKETS.join(', ')}.`),
-  );
-  process.exit(2);
+
+  if (!(ONLY_BUCKETS as string[]).includes(value)) {
+    console.error(
+      chalk.red(`Invalid --only value: ${value}. Expected one of: ${ONLY_BUCKETS.join(', ')}.`),
+    );
+    process.exit(2);
+  }
+  return { bucket: value as OnlyBucket, domain: 'all' };
 };
 
 const filterEntries = (entries: CheckEntry[], onlyFilter: OnlyBucket | undefined): CheckEntry[] =>
@@ -48,12 +82,22 @@ const filterOrphans = (
 
 export const prepareEntries = (
   checkResult: CheckResult,
-  onlyFilter: OnlyBucket | undefined,
+  onlyFilter: OnlyFilter | undefined,
 ): PreparedEntries => {
-  const filteredEntries = filterEntries(checkResult.entries, onlyFilter);
-  const filteredOrphans = filterOrphans(checkResult.orphans, onlyFilter);
-  const filteredPatchEntries = filterEntries(checkResult.patchEntries, onlyFilter);
-  const filteredPatchOrphans = filterOrphans(checkResult.patchOrphans, onlyFilter);
+  const bucket = onlyFilter?.bucket;
+  const domain = onlyFilter?.domain ?? 'all';
+
+  const includeOverrides = domain === 'all' || domain === 'overrides';
+  const includePatches = domain === 'all' || domain === 'patches';
+
+  const filteredEntries = includeOverrides ? filterEntries(checkResult.entries, bucket) : [];
+  const filteredOrphans = includeOverrides ? filterOrphans(checkResult.orphans, bucket) : [];
+  const filteredPatchEntries = includePatches
+    ? filterEntries(checkResult.patchEntries, bucket)
+    : [];
+  const filteredPatchOrphans = includePatches
+    ? filterOrphans(checkResult.patchOrphans, bucket)
+    : [];
 
   return {
     filteredEntries,
