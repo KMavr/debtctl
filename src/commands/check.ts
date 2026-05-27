@@ -49,7 +49,7 @@ const classifyEntry = (
     }
   }
 
-  const { fired, reason } = evaluateTrigger(meta, packageJson, now);
+  const { fired, reason } = evaluateTrigger(meta, { packageJson }, now);
 
   if (fired) {
     return { key, status: 'dueForReview' as const, reason };
