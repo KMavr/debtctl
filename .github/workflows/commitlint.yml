@@ -1,0 +1,14 @@
+name: Commitlint
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  commitlint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # full history so the action can lint the whole PR commit range
+      - uses: wagoid/commitlint-github-action@v6
