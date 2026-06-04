@@ -12,6 +12,9 @@ dist
 *.local
 *.js.map
 
+# The example installs the local CLI via file:..; its lockfile is noise, not shipped or CI-run.
+examples/package-lock.json
+
 # Editor directories and files
 .idea
 .DS_Store
