@@ -47,6 +47,10 @@
     "url": "https://github.com/KMavr/debtctl/issues"
   },
   "homepage": "https://github.com/KMavr/debtctl#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "lint-staged": {
     "*.{ts,js}": [
       "eslint --fix",

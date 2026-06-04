@@ -65,6 +65,8 @@ npm run debt:check
 - **Global install** — `npm install -g debtctl`. Convenient for ad-hoc use across many projects; not recommended for CI, since the version drifts independently from your repo.
 - **No install** — `npx debtctl@0.3.0 check`. Pinned to a version, fetched on demand. Fine for one-off exploration; slower on every CI run than installing.
 
+Every release is published from CI with [npm provenance](https://docs.npmjs.com/generating-provenance-statements) attestations, so each version on npm links back to the exact commit and workflow that built it.
+
 Requires Node.js ≥ 20.
 
 ## Quickstart
