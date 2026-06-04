@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/KMavr/debtctl/actions/workflows/ci.yml/badge.svg)](https://github.com/KMavr/debtctl/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/debtctl.svg)](https://www.npmjs.com/package/debtctl)
+[![npm downloads](https://img.shields.io/npm/dm/debtctl.svg)](https://www.npmjs.com/package/debtctl)
 
 > Govern `npm` `overrides`, `pnpm.overrides`, and `yarn` `resolutions` as documented technical debt — with a `check` command that fails CI when overrides go stale.
 
