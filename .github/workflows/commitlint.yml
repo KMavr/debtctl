@@ -8,7 +8,12 @@ jobs:
   commitlint:
     runs-on: ubuntu-latest
     steps:
+      # Dependabot commits are bot-generated and conventionally typed already; its auto-generated
+      # body (dependency tables/links) trips body-max-line-length. Skip the steps (rather than the
+      # whole job) so the check still reports success if it's a required status check.
       - uses: actions/checkout@v6
+        if: github.actor != 'dependabot[bot]'
         with:
           fetch-depth: 0 # full history so the action can lint the whole PR commit range
       - uses: wagoid/commitlint-github-action@v6
+        if: github.actor != 'dependabot[bot]'
