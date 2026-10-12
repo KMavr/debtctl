@@ -3,10 +3,10 @@ import { PackageManager } from '../types.js';
 export interface ManagerConfig {
   id: PackageManager;
   pmField: {
-    name: 'npm' | 'yarn' | 'pnpm';
+    name: 'npm' | 'yarn' | 'pnpm' | 'bun';
     matchesVersion?: (version: string) => boolean;
   };
-  lockfile: 'package-lock.json' | 'yarn.lock' | 'pnpm-lock.yaml';
+  lockfile: 'package-lock.json' | 'yarn.lock' | 'pnpm-lock.yaml' | 'bun.lock';
   matchesLockContent?: (content: string) => boolean;
 }
 
@@ -32,5 +32,10 @@ export const MANAGERS: ManagerConfig[] = [
     pmField: { name: 'yarn', matchesVersion: (version) => !version.startsWith('1.') },
     lockfile: 'yarn.lock',
     matchesLockContent: (content) => content.includes('__metadata:'),
+  },
+  {
+    id: 'bun',
+    pmField: { name: 'bun' },
+    lockfile: 'bun.lock',
   },
 ];

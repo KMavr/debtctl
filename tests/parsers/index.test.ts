@@ -39,6 +39,12 @@ describe('parseOverrides dispatcher', () => {
     ).toStrictEqual([{ key: '**/foo', value: '1.2.3' }]);
   });
 
+  it('should route "bun" to bunParse', async () => {
+    expect(await parseOverrides('bun', { overrides: { foo: '1.2.3' } }, tempDir)).toStrictEqual([
+      { key: 'foo', value: '1.2.3' },
+    ]);
+  });
+
   it('should return [] when the manager has no overrides in the given package.json', async () => {
     expect(await parseOverrides('npm', { name: 'empty' }, tempDir)).toStrictEqual([]);
   });

@@ -83,13 +83,22 @@ describe('detect module', () => {
       });
     });
 
+    it('should return bun when packageManager is "bun@x"', async () => {
+      await writePackageJson({ packageManager: 'bun@1.2.0' });
+      expect(await checkPackageManagerField(tempDir)).toEqual({
+        manager: 'bun',
+        version: '1.2.0',
+        source: 'packageManager-field',
+      });
+    });
+
     it('should return null when the packageManager field is missing', async () => {
       await writePackageJson({ name: 'no-pm-field' });
       expect(await checkPackageManagerField(tempDir)).toBeNull();
     });
 
     it('should return null when the manager name is unknown', async () => {
-      await writePackageJson({ packageManager: 'bun@1.0.0' });
+      await writePackageJson({ packageManager: 'fake-manager@1.0.0' });
       expect(await checkPackageManagerField(tempDir)).toBeNull();
     });
   });
@@ -117,6 +126,12 @@ describe('detect module', () => {
       await writeLockfile('yarn.lock', YARN_BERRY_LOCK);
       const matches = await getLockfileMatches(tempDir);
       expect(matches.map((manager) => manager.id)).toEqual(['yarn-berry']);
+    });
+
+    it('should return the bun manager when only bun.lock exists', async () => {
+      await writeLockfile('bun.lock');
+      const matches = await getLockfileMatches(tempDir);
+      expect(matches.map((manager) => manager.id)).toEqual(['bun']);
     });
 
     it('should return an empty array when no lockfiles exist', async () => {
@@ -180,6 +195,15 @@ describe('detect module', () => {
       await writeLockfile('package-lock.json');
       const result = await detect(tempDir);
       expect(result.ambiguous).toBeUndefined();
+    });
+
+    it('should flag bun.lock alongside package-lock.json as ambiguous', async () => {
+      await writePackageJson({ name: 'migrating-to-bun' });
+      await writeLockfile('package-lock.json');
+      await writeLockfile('bun.lock');
+      const result = await detect(tempDir);
+      expect(result.manager).toBe('npm');
+      expect(result.ambiguous).toEqual(['package-lock.json', 'bun.lock']);
     });
   });
 });
