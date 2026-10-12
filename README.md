@@ -4,9 +4,9 @@
 [![npm version](https://img.shields.io/npm/v/debtctl.svg)](https://www.npmjs.com/package/debtctl)
 [![npm downloads](https://img.shields.io/npm/dm/debtctl.svg)](https://www.npmjs.com/package/debtctl)
 
-> Govern `npm` `overrides`, `pnpm.overrides`, and `yarn` `resolutions` as documented technical debt — with a `check` command that fails CI when overrides go stale.
+> Govern `npm`/`bun` `overrides`, `pnpm.overrides`, and `yarn` `resolutions` as documented technical debt — with a `check` command that fails CI when overrides go stale.
 
-`debtctl` is a small CLI that treats your `npm` `overrides`, `pnpm.overrides`, and `yarn` `resolutions` as what they actually are: technical debt. It maintains a sidecar file (`.debtctl.json`) that records _why_ each override exists, _who_ owns it, and _when_ it should be revisited — then surfaces stale overrides in CI before they rot for another two years.
+`debtctl` is a small CLI that treats your `npm`/`bun` `overrides`, `pnpm.overrides`, and `yarn` `resolutions` as what they actually are: technical debt. It maintains a sidecar file (`.debtctl.json`) that records _why_ each override exists, _who_ owns it, and _when_ it should be revisited — then surfaces stale overrides in CI before they rot for another two years.
 
 ## Philosophy
 
@@ -37,6 +37,8 @@ npm install --save-dev debtctl
 pnpm add -D debtctl
 # or
 yarn add --dev debtctl
+# or
+bun add -d debtctl
 ```
 
 Then invoke via your package manager's runner:
@@ -45,6 +47,7 @@ Then invoke via your package manager's runner:
 npx debtctl init           # npm
 pnpm debtctl init          # pnpm (shortcut for `pnpm exec debtctl`)
 yarn debtctl init          # yarn
+bunx debtctl init          # bun
 ```
 
 Or add a `package.json` script and call it via the manager:
@@ -64,7 +67,7 @@ npm run debt:check
 ### Alternatives
 
 - **Global install** — `npm install -g debtctl`. Convenient for ad-hoc use across many projects; not recommended for CI, since the version drifts independently from your repo.
-- **No install** — `npx debtctl@0.3.0 check`. Pinned to a version, fetched on demand. Fine for one-off exploration; slower on every CI run than installing.
+- **No install** — `npx debtctl@0.4.0 check`. Pinned to a version, fetched on demand. Fine for one-off exploration; slower on every CI run than installing.
 
 Every release is published from CI with [npm provenance](https://docs.npmjs.com/generating-provenance-statements) attestations, so each version on npm links back to the exact commit and workflow that built it.
 
@@ -82,7 +85,7 @@ npx debtctl check       # fails if anything is undocumented or due for review
 
 Commit `.debtctl.json` to your repo. Run `npx debtctl check --strict` in CI.
 
-> The command examples below show the bare `debtctl` invocation. Prefix with `npx`, `pnpm`, or `yarn` per your package manager.
+> The command examples below show the bare `debtctl` invocation. Prefix with `npx`, `pnpm`, `yarn`, or `bunx` per your package manager.
 
 ## Commands
 
@@ -128,7 +131,7 @@ Due for review (1):
 
 1. The `packageManager` field in `package.json` (e.g. `"pnpm@9.1.0"`).
 2. The lockfile present in the working directory.
-3. If multiple lockfiles are present, `debtctl` reports the ambiguity and falls back to a fixed priority order: `npm` → `pnpm` → `yarn-classic` → `yarn-berry`.
+3. If multiple lockfiles are present, `debtctl` reports the ambiguity and falls back to a fixed priority order: `npm` → `pnpm` → `yarn-classic` → `yarn-berry` → `bun`.
 
 | Manager        | Lockfile            | Override location                             |
 | -------------- | ------------------- | --------------------------------------------- |
@@ -136,8 +139,11 @@ Due for review (1):
 | `pnpm`         | `pnpm-lock.yaml`    | `pnpm.overrides` and/or `pnpm-workspace.yaml` |
 | `yarn-classic` | `yarn.lock` (v1)    | `resolutions` (in `package.json`)             |
 | `yarn-berry`   | `yarn.lock` (v6+)   | `resolutions` (in `package.json`)             |
+| `bun`          | `bun.lock`          | `overrides` and/or `resolutions`              |
 
 For pnpm projects, `debtctl` reads overrides from both `pnpm.overrides` in `package.json` and the `overrides:` block of `pnpm-workspace.yaml` (the recommended location since pnpm 9). When the same key appears in both, the workspace YAML value wins — matching pnpm's own precedence.
+
+For Bun projects, `debtctl` reads both `overrides` and `resolutions` from `package.json`. When the same key appears in both, `overrides` wins. Only the text lockfile `bun.lock` (default since Bun 1.2) is detected; projects still on the binary `bun.lockb` should set `"packageManager": "bun@x.y.z"` in `package.json`.
 
 ### Ambiguous lockfiles
 
@@ -208,7 +214,7 @@ Fires when the patch file's content hash differs from the recorded hash. See [Pa
 
 ## Patches
 
-`debtctl` also governs code patches managed by `patch-package`, pnpm's `patchedDependencies`, and yarn berry's `patch:` protocol. Patches are arguably worse than overrides for rot: they include explicit code diffs that can fail to apply silently when upstream shifts, or apply _wrongly_ and quietly diverge from the patch's original intent.
+`debtctl` also governs code patches managed by `patch-package`, pnpm's and Bun's `patchedDependencies`, and yarn berry's `patch:` protocol. Patches are arguably worse than overrides for rot: they include explicit code diffs that can fail to apply silently when upstream shifts, or apply _wrongly_ and quietly diverge from the patch's original intent.
 
 Patches share the same metadata shape as overrides (`reason`, `owner`, `revisitWhen`) and live under the `patches` key of `.debtctl.json`. `debtctl init` detects patches in your project, computes a SHA-256 hash of each patch file, and scaffolds an entry with a `patch-hash` trigger pre-armed at the current content.
 
@@ -218,6 +224,7 @@ Patches share the same metadata shape as overrides (`reason`, `owner`, `revisitW
 | `yarn-classic` | `package.json` `scripts.postinstall`         | `patches/*.patch`                              |
 | `pnpm`         | `pnpm.patchedDependencies` in `package.json` | path declared per entry (typically `patches/`) |
 | `yarn-berry`   | `resolutions` field with `patch:` protocol   | `.yarn/patches/*.patch`                        |
+| `bun`          | `patchedDependencies` in `package.json`      | path declared per entry (typically `patches/`) |
 
 Example sidecar with both an override and two patches:
 
@@ -268,7 +275,43 @@ Example sidecar with both an override and two patches:
 
 - Workspace-sourced yarn berry patches (`patch:.../workspace#...`) — only npm-sourced patches stored in `.yarn/patches/` are detected.
 - Inline `.pnp.cjs` diffs.
+- Bun projects using `patch-package` instead of `bun patch`.
 - Auto-applying or auto-fixing patches — `debtctl` is strictly read-only.
+
+## Using with Vite+
+
+[Vite+](https://github.com/voidzero-dev/vite-plus) asks you to add overrides so every package in your project resolves `vite` to `npm:@voidzero-dev/vite-plus-core@<version>` and pins `vitest` to the version bundled with `vite-plus`. Both overrides must move in lockstep with the `vite-plus` dependency — and nothing enforces that. Bump `vite-plus`, forget the overrides, and you get mismatched builds or two Vitest runtimes with separate mock state.
+
+No special setup is needed: Vite+ runs pnpm, npm, Yarn, or Bun underneath, and `debtctl` detects it the usual way. Anchor both overrides on `vite-plus`:
+
+```json
+{
+  "version": 2,
+  "overrides": {
+    "vite": {
+      "reason": "Vite+ requires vite to resolve to vite-plus-core",
+      "owner": "team-frontend",
+      "revisitWhen": {
+        "type": "version-anchor",
+        "package": "vite-plus",
+        "declaredRange": "^1.1.0"
+      }
+    },
+    "vitest": {
+      "reason": "Pinned to the Vitest bundled with vite-plus (see `vp toolchain vitest`)",
+      "owner": "team-frontend",
+      "revisitWhen": {
+        "type": "version-anchor",
+        "package": "vite-plus",
+        "declaredRange": "^1.1.0"
+      }
+    }
+  },
+  "patches": {}
+}
+```
+
+When someone bumps `vite-plus`, `debtctl check --strict` fails until both overrides are re-verified and their `declaredRange` updated.
 
 ## CI usage
 
@@ -298,7 +341,7 @@ Orphans never cause a non-zero exit; they're informational.
 
 ## Status
 
-`debtctl` is at `0.3.0`. The metadata schema is at version 2; v1 sidecars are auto-migrated on read. Future schema changes will bump it explicitly. Bug reports and PRs welcome.
+`debtctl` is at `0.4.0`. The metadata schema is at version 2; v1 sidecars are auto-migrated on read. Future schema changes will bump it explicitly. Bug reports and PRs welcome.
 
 ## License
 
