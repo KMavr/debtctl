@@ -1,4 +1,5 @@
 import { Override, PackageJson, PackageManager } from '../types.js';
+import { bunParse } from './bun.js';
 import { npmParse } from './npm.js';
 import { pnpmParse } from './pnpm.js';
 import { yarnBerryParse } from './yarn-berry.js';
@@ -18,5 +19,7 @@ export const parseOverrides = async (
       return yarnClassicParse(packageJson);
     case 'yarn-berry':
       return yarnBerryParse(packageJson);
+    case 'bun':
+      return bunParse(packageJson);
   }
 };

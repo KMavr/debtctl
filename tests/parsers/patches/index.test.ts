@@ -71,9 +71,23 @@ describe('parsePatches dispatcher', () => {
     expect(patches[0]).toMatchObject({ key: 'foo', source: 'yarn-berry' });
   });
 
+  it('should route "bun" to bun patchedDependencies detection', async () => {
+    await writePatchFile('patches/foo@1.0.0.patch');
+
+    const patches = await parsePatches(
+      'bun',
+      { patchedDependencies: { 'foo@1.0.0': 'patches/foo@1.0.0.patch' } },
+      tempDir,
+    );
+
+    expect(patches).toHaveLength(1);
+    expect(patches[0]).toMatchObject({ key: 'foo', source: 'bun' });
+  });
+
   it('should return [] when the manager has no patches in the given project', async () => {
     expect(await parsePatches('npm', {}, tempDir)).toStrictEqual([]);
     expect(await parsePatches('pnpm', {}, tempDir)).toStrictEqual([]);
     expect(await parsePatches('yarn-berry', {}, tempDir)).toStrictEqual([]);
+    expect(await parsePatches('bun', {}, tempDir)).toStrictEqual([]);
   });
 });

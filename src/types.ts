@@ -1,4 +1,4 @@
-export type PackageManager = 'npm' | 'pnpm' | 'yarn-classic' | 'yarn-berry';
+export type PackageManager = 'npm' | 'pnpm' | 'yarn-classic' | 'yarn-berry' | 'bun';
 
 export type PackageJson = Record<string, unknown>;
 
@@ -9,7 +9,7 @@ export interface Override {
 
 export interface Patch {
   key: string;
-  source: 'patch-package' | 'pnpm' | 'yarn-berry';
+  source: 'patch-package' | 'pnpm' | 'yarn-berry' | 'bun';
   patchFilePath: string;
   contentHash: string;
 }

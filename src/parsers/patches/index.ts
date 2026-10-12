@@ -1,5 +1,6 @@
 import { PackageJson, PackageManager, Patch } from '../../types.js';
 import { patchPackageParse } from './patch-package.js';
+import { parsePatchedDependencies } from './patchedDependencies.js';
 import { pnpmPatchesParse } from './pnpm.js';
 import { yarnBerryPatchesParse } from './yarn-berry.js';
 
@@ -16,5 +17,7 @@ export const parsePatches = async (
       return pnpmPatchesParse(packageJson, cwd);
     case 'yarn-berry':
       return yarnBerryPatchesParse(packageJson, cwd);
+    case 'bun':
+      return parsePatchedDependencies(packageJson.patchedDependencies, 'bun', cwd);
   }
 };
