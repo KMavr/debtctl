@@ -3,6 +3,7 @@ name: Commitlint
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, edited]
 
 jobs:
   commitlint:
@@ -12,8 +13,14 @@ jobs:
       # body (dependency tables/links) trips body-max-line-length. Skip the steps (rather than the
       # whole job) so the check still reports success if it's a required status check.
       - uses: actions/checkout@v7
-        if: github.actor != 'dependabot[bot]'
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         with:
           fetch-depth: 0 # full history so the action can lint the whole PR commit range
       - uses: wagoid/commitlint-github-action@v6
-        if: github.actor != 'dependabot[bot]'
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
+      # Squash merges use the PR title as the commit header, so it's what release-please reads.
+      - name: Lint PR title
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: echo "$PR_TITLE" | npx -y -p @commitlint/cli@21 -p @commitlint/config-conventional@21 commitlint
