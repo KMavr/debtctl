@@ -37,3 +37,11 @@ jobs:
 
       - name: Test
         run: npm run test -- --run
+
+  # Single required check, so matrix changes don't orphan branch protection.
+  ci-success:
+    if: always()
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ needs.test.result }}" = success

@@ -51,11 +51,9 @@ Releases are published from CI with npm provenance — no manual `npm publish`.
    `.debtctl.json` schema changed.
 3. Ensure the full gate is green locally:
    `npm run lint && npm run typecheck && npm run format:check && npm test -- --run`.
-4. Push and open a PR against `main`. CI runs the suite across Node 20/22/24.
+4. Push and open a PR against `main`. CI runs the suite across Node 20/22/24; `ci-success` is the required check.
 
-### Maintainer note: changing the CI matrix
+### Maintainer note: branch protection
 
-Branch protection on `main` pins required status checks to literal CI job names (e.g.
-`Lint, typecheck, test (Node 24)`). If you change the matrix in `.github/workflows/ci.yml`, the job
-names change and the old required checks become orphaned, blocking all PRs. Repoint them in
-**Settings → Branches** afterwards.
+Require only the `ci-success` status check on `main` (**Settings → Branches**). It aggregates the
+whole Node matrix, so changing the matrix in `.github/workflows/ci.yml` never orphans a required check.
