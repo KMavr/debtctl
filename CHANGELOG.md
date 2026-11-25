@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0](https://github.com/KMavr/debtctl/compare/debtctl-v0.4.0...debtctl-v0.5.0) (2026-11-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* debtctl now requires Node.js >=22. Node 20 is no longer supported.
+
+### Features
+
+* require Node.js 22 or newer ([#89](https://github.com/KMavr/debtctl/issues/89)) ([50a97cc](https://github.com/KMavr/debtctl/commit/50a97ccda361d254255f929013934b0332201ace))
+
 ## [0.4.0](https://github.com/KMavr/debtctl/compare/debtctl-v0.3.0...debtctl-v0.4.0) (2026-10-12)
 
 
