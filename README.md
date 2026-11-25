@@ -103,7 +103,7 @@ npm run debt:check
 
 Every release is published from CI with [npm provenance](https://docs.npmjs.com/generating-provenance-statements) attestations, so each version on npm links back to the exact commit and workflow that built it.
 
-Requires Node.js ≥ 20.
+Requires Node.js ≥ 22.
 
 ## Quickstart
 
@@ -353,7 +353,7 @@ With `debtctl` installed as a dev dependency, run `check --strict` after `npm ci
 - uses: actions/checkout@v4
 - uses: actions/setup-node@v4
   with:
-    node-version: 20
+    node-version: 22
 - run: npm ci
 - name: Verify dependency overrides
   run: npx debtctl check --strict
