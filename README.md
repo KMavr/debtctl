@@ -99,7 +99,7 @@ npm run debt:check
 ### Alternatives
 
 - **Global install** — `npm install -g debtctl`. Convenient for ad-hoc use across many projects; not recommended for CI, since the version drifts independently from your repo.
-- **No install** — `npx debtctl@0.4.0 check`. Pinned to a version, fetched on demand. Fine for one-off exploration; slower on every CI run than installing.
+- **No install** — `npx debtctl@0.5.0 check`. Pinned to a version, fetched on demand. Fine for one-off exploration; slower on every CI run than installing.
 
 Every release is published from CI with [npm provenance](https://docs.npmjs.com/generating-provenance-statements) attestations, so each version on npm links back to the exact commit and workflow that built it.
 
@@ -373,7 +373,7 @@ Orphans never cause a non-zero exit; they're informational.
 
 ## Status
 
-`debtctl` is at `0.4.0`. The metadata schema is at version 2; v1 sidecars are auto-migrated on read. Future schema changes will bump it explicitly. Bug reports and PRs welcome.
+`debtctl` is at `0.5.0`. The metadata schema is at version 2; v1 sidecars are auto-migrated on read. Future schema changes will bump it explicitly. Bug reports and PRs welcome.
 
 ## Contributing
 
