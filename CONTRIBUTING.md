@@ -51,7 +51,7 @@ Releases are published from CI with npm provenance — no manual `npm publish`.
    `.debtctl.json` schema changed.
 3. Ensure the full gate is green locally:
    `npm run lint && npm run typecheck && npm run format:check && npm test -- --run`.
-4. Push and open a PR against `main`. CI runs the suite across Node 22/24; `ci-success` is the required check.
+4. Push and open a PR against `main`. CI runs the suite across Node 22/24/26; `ci-success` is the required check.
 
 ### Maintainer note: branch protection
 
