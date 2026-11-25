@@ -3,18 +3,50 @@
 [![CI](https://github.com/KMavr/debtctl/actions/workflows/ci.yml/badge.svg)](https://github.com/KMavr/debtctl/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/debtctl.svg)](https://www.npmjs.com/package/debtctl)
 [![npm downloads](https://img.shields.io/npm/dm/debtctl.svg)](https://www.npmjs.com/package/debtctl)
+[![unpacked size](https://img.shields.io/npm/unpacked-size/debtctl.svg)](https://www.npmjs.com/package/debtctl)
+[![node](https://img.shields.io/node/v/debtctl.svg)](https://www.npmjs.com/package/debtctl)
+[![license](https://img.shields.io/npm/l/debtctl.svg)](./LICENSE)
+[![types](https://img.shields.io/npm/types/debtctl.svg)](https://www.npmjs.com/package/debtctl)
+[![package managers](https://img.shields.io/badge/npm%20%7C%20pnpm%20%7C%20yarn%20%7C%20bun-supported-cb3837?logo=npm&logoColor=white)](#detection-precedence)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-fe5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
 > Govern `npm`/`bun` `overrides`, `pnpm.overrides`, and `yarn` `resolutions` as documented technical debt — with a `check` command that fails CI when overrides go stale.
 
 `debtctl` is a small CLI that treats your `npm`/`bun` `overrides`, `pnpm.overrides`, and `yarn` `resolutions` as what they actually are: technical debt. It maintains a sidecar file (`.debtctl.json`) that records _why_ each override exists, _who_ owns it, and _when_ it should be revisited — then surfaces stale overrides in CI before they rot for another two years.
 
-## Philosophy
+## Why
 
 Overrides are routinely added to patch a CVE, force peer compatibility, or pin a transitive dependency. They're almost always meant to be temporary. They are almost never reviewed again.
 
 `debtctl` does one job: it enforces three pieces of metadata next to every override, and fails CI when an override has drifted past its expected lifetime. No metadata, no merge. No revisit trigger, no merge. Reviewer changed the override's range and forgot to update the rationale? CI catches it.
 
 The tool has four runtime dependencies (`commander`, `chalk`, `semver`, `yaml`) and is deliberately small. It does not patch your `package.json`, run installs, or talk to a registry — it only reads, classifies, and reports.
+
+## Before / after
+
+```jsonc
+// ✗ package.json — nobody remembers why this is here
+{ "overrides": { "some-package": "2.4.1" } }
+```
+
+```jsonc
+// ✓ .debtctl.json — reason, owner, and a trigger that tells you when to revisit
+{
+  "version": 2,
+  "overrides": {
+    "some-package": {
+      "reason": "Patches CVE-2024-XXXX until upstream v3 ships",
+      "owner": "team-security",
+      "revisitWhen": {
+        "type": "version-anchor",
+        "package": "some-package",
+        "declaredRange": "^2.4.0",
+      },
+    },
+  },
+  "patches": {},
+}
+```
 
 ## How this compares to Renovate / Dependabot
 
@@ -343,6 +375,19 @@ Orphans never cause a non-zero exit; they're informational.
 
 `debtctl` is at `0.4.0`. The metadata schema is at version 2; v1 sidecars are auto-migrated on read. Future schema changes will bump it explicitly. Bug reports and PRs welcome.
 
+## Contributing
+
+Issues and PRs welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, the test workflow, and
+commit conventions. Quick start:
+
+```sh
+npm install
+npm test          # vitest
+npm run lint
+npm run typecheck
+npm run build
+```
+
 ## License
 
-MIT
+[MIT](./LICENSE) © Konstantinos Mavrikas
