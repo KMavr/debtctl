@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig([
   ...tseslint.configs.recommended,
-  globalIgnores(['dist/**', 'node_modules/**']),
+  globalIgnores(['dist/**', 'node_modules/**', 'coverage/**']),
   {
     rules: {
       'no-nested-ternary': 'error',
