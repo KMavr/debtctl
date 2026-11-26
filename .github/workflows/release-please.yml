@@ -1,4 +1,4 @@
-name: release-please
+name: Release
 
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-node@v7
         if: ${{ steps.release.outputs.release_created }}
         with:
-          node-version: 24
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
       - run: npm ci
