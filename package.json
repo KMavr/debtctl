@@ -15,7 +15,7 @@
     "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc",
     "dev": "tsx src/index.ts",
     "test": "vitest",
-    "lint": "eslint src",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -72,7 +72,7 @@
   "devDependencies": {
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
-    "@eslint/js": "^9.39.4",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^26.0.1",
     "@types/semver": "^7.7.1",
     "eslint": "^10.15.0",
